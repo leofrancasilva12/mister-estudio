@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Criador from '@/components/Criador';
 import Feed from '@/components/Feed';
 import Icone from '@/components/Icone';
@@ -10,6 +10,36 @@ import { useHistorico } from '@/lib/historico';
 import { usePersonagens } from '@/lib/personagens';
 import { estimarCusto } from '@/lib/custos';
 import { CabecalhoApp } from './tela';
+
+// Painel para levar o personagem ao chat do Claude (conector Studio)
+function EnviarAoStudio({ personagem, enviar, avisar }) {
+    const [descricao, setDescricao] = useState(personagem.descricao || '');
+    const [enviando, setEnviando] = useState(false);
+    useEffect(() => { setDescricao(personagem.descricao || ''); }, [personagem.id, personagem.descricao]);
+    const ir = async () => {
+        if (descricao.trim().length < 10) { avisar('Descreva a aparência com pelo menos 10 letras.'); return; }
+        setEnviando(true);
+        try {
+            const r = await enviar(personagem.id, descricao.trim());
+            if (r) avisar(`${personagem.nome} já pode ser usado no chat do Claude.`);
+        } catch (e) { avisar(e.message); } finally { setEnviando(false); }
+    };
+    return (
+        <div className="flex flex-col gap-2 rounded-2xl border border-linha p-3">
+            <span className="text-[13px] font-medium">Usar no chat do Claude</span>
+            {personagem.enviadoStudio
+                ? <span className="text-xs text-cinza">Já está no Studio. No chat, peça: “gera {personagem.nome} na academia”.</span>
+                : <span className="text-xs text-cinza">Envia as fotos para o Studio. Depois é só citar o nome no chat.</span>}
+            <label htmlFor="desc-studio" className="sr-only">Descrição física</label>
+            <textarea id="desc-studio" rows={2} value={descricao} onChange={(e) => setDescricao(e.target.value)} maxLength={600} placeholder="Descrição física: idade, cabelo, pele, traços. Ex.: mulher de 30 anos, cabelo cacheado castanho, pele morena" className="resize-y rounded-xl border border-linha p-2.5 text-[13px] outline-none focus:border-tinta" />
+            {!personagem.enviadoStudio && (
+                <button type="button" onClick={ir} disabled={enviando} className="flex h-10 items-center justify-center gap-2 rounded-xl bg-tinta text-[13px] text-white disabled:opacity-50">
+                    <Icone nome="faisca" tamanho={14} />{enviando ? 'Enviando...' : 'Enviar para o Studio'}
+                </button>
+            )}
+        </div>
+    );
+}
 
 function NovoPersonagem({ aoCriar, aoCancelar }) {
     const { avisar } = useHistorico();
@@ -51,7 +81,7 @@ function NovoPersonagem({ aoCriar, aoCancelar }) {
 export default function TelaPersonagens() {
     const app = appPorId('personagens');
     const { itensDaConversa, gerar, avisar } = useHistorico();
-    const { lista, criar, apagar, linksDe } = usePersonagens();
+    const { lista, criar, apagar, linksDe, enviarAoStudio } = usePersonagens();
     const [escolhido, setEscolhido] = useState(null);
     const [novo, setNovo] = useState(false);
     const [prompt, setPrompt] = useState('');
@@ -116,6 +146,7 @@ export default function TelaPersonagens() {
                             )}
                         </div>
                     </Campo>
+                    {atual && !novo && <EnviarAoStudio personagem={atual} enviar={enviarAoStudio} avisar={avisar} />}
                     {novo && <NovoPersonagem aoCriar={async (n, a) => { const p = await criar(n, a); setEscolhido(p.id); setNovo(false); }} aoCancelar={() => setNovo(false)} />}
                 </>
             }

@@ -1,10 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
+import { hostHeaderValidation, localhostHostValidation } from "@modelcontextprotocol/sdk/server/middleware/hostHeaderValidation.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { config } from "./config.js";
 import { registrarFerramentas } from "./ferramentas.js";
+import { cadastrarPersonagem, ErroCadastro } from "./fotos.js";
+import { listarPersonagens } from "./galeria.js";
+import express from "express";
 import { criarProvedorSimulado } from "./provedores/simulado.js";
 import { criarProvedorKie } from "./provedores/kie.js";
 // Ponto de partida: escolhe o provedor, monta o servidor e liga no modo certo.
@@ -41,15 +44,35 @@ async function iniciarHttp() {
     if (!config.tokenAcesso && !local) {
         throw new Error("Defina MCP_TOKEN antes de abrir o servidor para a rede.");
     }
-    const app = createMcpExpressApp({
-        host: config.host,
-        allowedHosts: config.hostsPermitidos.length ? config.hostsPermitidos : undefined,
-    });
+    // Montamos o app à mão (em vez de createMcpExpressApp) para a rota interna aceitar fotos
+    // maiores que o limite padrão de 100 KB. A proteção de Host continua a mesma.
+    const app = express();
+    if (config.hostsPermitidos.length)
+        app.use(hostHeaderValidation(config.hostsPermitidos));
+    else if (["127.0.0.1", "localhost", "::1"].includes(config.host))
+        app.use(localhostHostValidation());
+    app.use("/interno", express.json({ limit: "45mb" }));
+    app.use(express.json());
     // Rota de saúde, para o Docker e o Caddy saberem que o servidor está vivo.
     app.get(["/saude", "/mcp-saude"], (_req, res) => {
         res.json({ ok: true, provedor: provedor.nome });
     });
     const protecao = config.tokenAcesso ? [exigirToken] : [];
+    // Rota interna usada pelo site ("Enviar para o Studio"). O Caddy não expõe /interno:
+    // só o app, pela rede interna do Docker, chega aqui (e ainda precisa da chave).
+    app.post("/interno/personagens", ...protecao, async (req, res) => {
+        try {
+            const p = await cadastrarPersonagem(req.body ?? {});
+            res.json({ ok: true, nome: p.nome, fotos: p.fotos.length });
+        }
+        catch (e) {
+            const status = e instanceof ErroCadastro ? e.status : 500;
+            res.status(status).json({ ok: false, erro: e.message });
+        }
+    });
+    app.get("/interno/personagens", ...protecao, async (_req, res) => {
+        res.json({ ok: true, nomes: (await listarPersonagens()).map((p) => p.nome) });
+    });
     // Modo "sem sessão": cada pedido do Claude cria um servidor novo e descartável.
     // É o formato mais simples e robusto para rodar atrás de um proxy.
     app.post(["/mcp", "/mcp/:chave"], ...protecao, async (req, res) => {

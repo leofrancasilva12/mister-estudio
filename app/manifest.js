@@ -4,6 +4,7 @@ export default function manifest() {
         name: 'Mister Studio',
         short_name: 'Mister Studio',
         description: 'Vídeos com inteligência: imagens, vídeos, vozes e avatares com IA.',
+        id: '/',
         start_url: '/',
         scope: '/',
         display: 'standalone',

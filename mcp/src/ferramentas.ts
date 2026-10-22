@@ -3,7 +3,6 @@ import { z } from "zod";
 import {
   apagarPersonagem,
   buscarPersonagem,
-  criarPersonagem,
   linksDoPersonagem,
   listarGaleria,
   listarPersonagens,
@@ -14,6 +13,7 @@ import { consultarSaldo, estimarCreditos, NOMES_VOZES } from "./provedores/kie.j
 import { config } from "./config.js";
 import sharp from "sharp";
 import { CATALOGO } from "./catalogo-site.js";
+import { cadastrarPersonagem } from "./fotos.js";
 
 // Aqui ficam as ferramentas que o Claude enxerga.
 // Cada uma tem: nome, descrição (é ela que ensina o Claude quando usar),
@@ -107,41 +107,6 @@ async function aplicarPersonagem(pedido: PedidoGeracao, nome?: string): Promise<
       referencias: [...(pedido.referencias ?? []), ...links],
     },
   };
-}
-
-// ---------- Fotos dos personagens: valida, reduz e converte ----------
-const MAX_BYTES = 8 * 1024 * 1024;
-const FORMATOS_ACEITOS = ["jpeg", "png", "webp"]; // conferido pelo conteúdo real do arquivo
-
-async function tratarFoto(bruto: Buffer, origem: string): Promise<Buffer> {
-  if (bruto.length > MAX_BYTES) throw new Error(`${origem} passou de 8 MB.`);
-  let formato: string | undefined;
-  try { formato = (await sharp(bruto).metadata()).format; } catch { /* não é imagem */ }
-  if (!formato || !FORMATOS_ACEITOS.includes(formato)) throw new Error(`${origem} não é JPEG, PNG ou WebP.`);
-  return sharp(bruto).rotate().resize(1024, 1024, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 86 }).toBuffer();
-}
-
-async function baixarFoto(url: string, n: number): Promise<Buffer> {
-  const origem = `A foto ${n} (link)`;
-  if (!/^https:\/\//i.test(url)) throw new Error(`${origem} precisa começar com https://.`);
-  let r: globalThis.Response;
-  try { r = await fetch(url, { signal: AbortSignal.timeout(30_000) }); } catch { throw new Error(`Não consegui baixar ${origem.toLowerCase()}.`); }
-  if (!r.ok) throw new Error(`${origem} respondeu com erro ${r.status}.`);
-  const tipo = (r.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
-  if (tipo && !["image/jpeg", "image/png", "image/webp"].includes(tipo)) throw new Error(`${origem} não é JPEG, PNG ou WebP (veio ${tipo}).`);
-  if (Number(r.headers.get("content-length") ?? 0) > MAX_BYTES) throw new Error(`${origem} passou de 8 MB.`);
-  return tratarFoto(Buffer.from(await r.arrayBuffer()), origem);
-}
-
-function decodificarFoto(base64: string, n: number): Promise<Buffer> {
-  const origem = `A foto ${n} (base64)`;
-  const m = /^data:([^;,]+);base64,/i.exec(base64.trim());
-  if (m && !["image/jpeg", "image/png", "image/webp"].includes(m[1].toLowerCase())) {
-    throw new Error(`${origem} não é JPEG, PNG ou WebP (veio ${m[1]}).`);
-  }
-  const limpo = base64.trim().replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
-  if (limpo.length > Math.ceil(MAX_BYTES / 3) * 4 + 4) throw new Error(`${origem} passou de 8 MB.`);
-  return tratarFoto(Buffer.from(limpo, "base64"), origem);
 }
 
 export function registrarFerramentas(server: McpServer, provedor: Provedor) {
@@ -298,16 +263,8 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       annotations: { openWorldHint: true },
     },
     async ({ nome, descricao, fotos_links, fotos_base64 }) => {
-      const links = fotos_links ?? [];
-      const b64 = fotos_base64 ?? [];
-      const total = links.length + b64.length;
-      if (total < 1 || total > 4) return texto(`Mande de 1 a 4 fotos no total (recebi ${total}).`);
-      if (await buscarPersonagem(nome)) return texto(`Já existe um personagem chamado "${nome}". Escolha outro nome.`);
       try {
-        const fotos: Buffer[] = [];
-        for (let i = 0; i < links.length; i++) fotos.push(await baixarFoto(links[i], i + 1));
-        for (let i = 0; i < b64.length; i++) fotos.push(await decodificarFoto(b64[i], links.length + i + 1));
-        const p = await criarPersonagem({ nome, descricao, fotos });
+        const p = await cadastrarPersonagem({ nome, descricao, fotos_links, fotos_base64 });
         return texto(`Personagem "${p.nome}" salvo com ${p.fotos.length} ${p.fotos.length === 1 ? "foto" : "fotos"}.\nUse em gerar_imagem ou gerar_video com personagem: "${p.nome}".`);
       } catch (e) {
         return texto(`Não consegui criar o personagem: ${(e as Error).message}`);

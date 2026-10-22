@@ -16,7 +16,7 @@ services:
       HOST: 0.0.0.0
       PORTA: 3333
       MCP_TOKEN: ${MCP_TOKEN}
-      HOSTS_PERMITIDOS: ${DOMINIO}
+      HOSTS_PERMITIDOS: ${DOMINIO},estudio-mcp # estudio-mcp: o site fala com ele pela rede interna
       PROVEDOR: ${MCP_PROVEDOR:-kie}
       KIE_API_KEY: ${KIE_API_KEY}
       MCP_LIMITE_CREDITOS_DIA: ${MCP_LIMITE_CREDITOS_DIA:-600}
