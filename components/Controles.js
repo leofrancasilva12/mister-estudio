@@ -4,7 +4,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import Icone from './Icone';
 import { formaProporcao, rotuloProporcao } from '@/lib/modelos';
-import { enviarArquivo } from '@/lib/api';
+import { enviarArquivo, melhorarPrompt } from '@/lib/api';
+import { useHistorico } from '@/lib/historico';
 
 export function Campo({ rotulo, extra, children, htmlFor }) {
     return (
@@ -123,12 +124,49 @@ export function SeletorModelo({ modelos, valor, aoMudar, iconeEscuro = false }) 
     );
 }
 
-export function CampoPrompt({ valor, aoMudar, placeholder, linhas = 4, max = 5000, rotulo = 'Prompt', acoes }) {
+// "Melhorar prompt": reescreve a ideia num prompt detalhado e permite desfazer
+export function useMelhorar({ valor, aoMudar, melhorar }) {
+    const { avisar } = useHistorico();
+    const [carregando, setCarregando] = useState(false);
+    const [anterior, setAnterior] = useState(null);
+    const executar = async () => {
+        if (!valor.trim()) { avisar('Escreva uma ideia antes de melhorar.'); return; }
+        setCarregando(true);
+        try {
+            const novo = await melhorarPrompt(valor, melhorar);
+            setAnterior(valor);
+            aoMudar(novo);
+        } catch (e) {
+            avisar(e.message);
+        } finally {
+            setCarregando(false);
+        }
+    };
+    const desfazer = () => { if (anterior !== null) { aoMudar(anterior); setAnterior(null); } };
+    return { ativo: !!melhorar, carregando, executar, podeDesfazer: anterior !== null, desfazer };
+}
+
+export function BotoesMelhorar({ m, compacto = false }) {
+    if (!m.ativo) return null;
+    return (
+        <div className="flex flex-wrap gap-1.5">
+            <button type="button" onClick={m.executar} disabled={m.carregando} aria-label="Melhorar prompt" className={`flex items-center gap-1.5 rounded-full border border-linha text-xs transition-colors hover:border-tinta/40 disabled:opacity-50 ${compacto ? 'h-10 w-10 justify-center' : 'h-9 px-3'}`}>
+                <Icone nome="faisca" tamanho={14} className={m.carregando ? 'animate-pulsar' : ''} />
+                {!compacto && (m.carregando ? 'Melhorando...' : 'Melhorar prompt')}
+            </button>
+            {m.podeDesfazer && !compacto && <button type="button" onClick={m.desfazer} className="h-9 rounded-full px-3 text-xs text-cinza hover:text-tinta">Desfazer</button>}
+        </div>
+    );
+}
+
+export function CampoPrompt({ valor, aoMudar, placeholder, linhas = 4, max = 5000, rotulo = 'Prompt', acoes, melhorar }) {
     const id = useId();
+    const m = useMelhorar({ valor, aoMudar, melhorar });
     return (
         <Campo rotulo={rotulo} htmlFor={id} extra={<span className="font-mono text-[11px] text-suave">{valor.length} / {max}</span>}>
             <div className="flex flex-col gap-2.5 rounded-2xl border border-[rgba(17,17,17,0.14)] p-3 focus-within:border-tinta">
                 <textarea id={id} rows={linhas} maxLength={max} value={valor} onChange={(e) => aoMudar(e.target.value)} placeholder={placeholder} className="w-full resize-y bg-transparent text-[15px] leading-relaxed outline-none" />
+                <BotoesMelhorar m={m} />
                 {acoes}
             </div>
         </Campo>
@@ -138,11 +176,11 @@ export function CampoPrompt({ valor, aoMudar, placeholder, linhas = 4, max = 500
 // Enviar um ou mais arquivos. Cada item: { url, nome, previa, progresso, erro }
 const LIMITES_MB = { image: 10, audio: 10, video: 50 };
 
-function validar(arquivos, aceita, avisar) {
+function validar(arquivos, aceita, avisar, limiteMb) {
     const ok = [];
     for (const f of Array.from(arquivos || [])) {
         const tipo = (f.type || '').split('/')[0];
-        const limite = LIMITES_MB[tipo];
+        const limite = LIMITES_MB[tipo] && (limiteMb || LIMITES_MB[tipo]);
         if (!limite || !aceita.split(',').some((a) => f.type.startsWith(a.trim().replace('*', '')))) { avisar?.(`"${f.name || 'Arquivo'}" não é um tipo aceito aqui.`); continue; }
         if (f.size > limite * 1024 * 1024) { avisar?.(`"${f.name}" passa de ${limite} MB.`); continue; }
         ok.push(f);
@@ -162,13 +200,13 @@ function medirDuracao(src, tipo, aoMedir) {
 
 // Envio de um ou mais arquivos. Cada item: { chave, nome, tipo, previa, url, progresso, erro }
 // escolher() abre a galeria/arquivos; soltar(arquivos) recebe arquivos arrastados ou colados.
-export function useEnvios(maximo = 1, { aceita = 'image/jpeg,image/png,image/webp', avisar } = {}) {
+export function useEnvios(maximo = 1, { aceita = 'image/jpeg,image/png,image/webp', avisar, limiteMb } = {}) {
     const [itens, setItens] = useState([]);
     const itensRef = useRef(itens);
     itensRef.current = itens;
 
     const adicionar = async (arquivos) => {
-        const validos = validar(arquivos, aceita, avisar);
+        const validos = validar(arquivos, aceita, avisar, limiteMb);
         const ocupados = itensRef.current.filter((i) => !i.erro).length;
         const vagas = maximo === 1 ? 1 : maximo - ocupados;
         if (vagas <= 0 && validos.length) { avisar?.(`Limite de ${maximo} arquivos.`); return; }

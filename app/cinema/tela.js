@@ -61,7 +61,7 @@ export default function TelaCinema() {
         <Criador
             rotulo="Montar a cena"
             topo={null}
-            prompt={{ valor: prompt, aoMudar: setPrompt, rotulo: 'Cena', placeholder: 'Ex.: mulher de perfil na janela ao entardecer, poeira no ar', max: 4000, linhas: 3 }}
+            prompt={{ melhorar: 'imagem', valor: prompt, aoMudar: setPrompt, rotulo: 'Cena', placeholder: 'Ex.: mulher de perfil na janela ao entardecer, poeira no ar', max: 4000, linhas: 3 }}
             opcoes={
                 <>
                     <Campo rotulo="Câmera">

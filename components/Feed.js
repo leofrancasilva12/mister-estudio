@@ -26,7 +26,7 @@ function useAgora(ativo) {
 export function porcentagem(item, agora) {
     if (typeof item.progresso === 'number' && item.progresso > 0) return Math.min(99, Math.round(item.progresso));
     if (item.estado === 'enviando') return 0;
-    const medio = (item.tipo === 'ferramenta' && item.midia === 'video' ? 120 : TEMPO_MEDIO[item.tipo]) || 60;
+    const medio = (item.tipo === 'ferramenta' && item.midia === 'video' ? 120 : item.tipo === 'app' ? (item.midia === 'video' ? 240 : 40) : TEMPO_MEDIO[item.tipo]) || 60;
     const passou = Math.max(0, (agora - (item.iniciadoEm || item.criadoEm)) / 1000);
     return Math.min(95, Math.round(95 * (1 - Math.exp((-1.7 * passou) / medio))));
 }

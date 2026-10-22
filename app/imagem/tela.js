@@ -94,7 +94,7 @@ export default function TelaImagem() {
                     {!modelo.editar && <span className="-mt-2 text-xs text-cinza">O {modelo.nome} só cria do zero. Para editar uma imagem, toque em + ou escolha outro modelo.</span>}
                 </>
             }
-            prompt={{ valor: prompt, aoMudar: setPrompt, placeholder: editar ? 'O que mudar? Ex.: coloque o produto sobre mármore branco' : 'Descreva a imagem que você quer criar', max: 5000 }}
+            prompt={{ melhorar: 'imagem', valor: prompt, aoMudar: setPrompt, placeholder: editar ? 'O que mudar? Ex.: coloque o produto sobre mármore branco' : 'Descreva a imagem que você quer criar', max: 5000 }}
             opcoes={
                 <>
                     <Campo rotulo="Proporção"><Proporcoes opcoes={modelo.proporcoes} valor={proporcao} aoMudar={setProporcao} /></Campo>

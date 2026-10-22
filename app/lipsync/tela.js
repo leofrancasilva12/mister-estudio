@@ -20,6 +20,7 @@ export default function TelaLipSync() {
     const modelo = opcoes.find((m) => m.id === modeloId) || opcoes[0];
     const [prompt, setPrompt] = useState('');
     const [resolucao, setResolucao] = useState('480p');
+    useEffect(() => { if (modelo.resolucoes && !modelo.resolucoes.includes(resolucao)) setResolucao(modelo.resolucoes[0]); }, [modelo, resolucao]);
     const retrato = useEnvios(1, { avisar });
     const video = useEnvios(1, { avisar, aceita: 'video/mp4,video/quicktime' });
     const audio = useEnvios(1, { avisar, aceita: AUDIOS });
@@ -99,7 +100,7 @@ export default function TelaLipSync() {
                     </fieldset>
                 </>
             }
-            prompt={modelo.prompt ? { valor: prompt, aoMudar: setPrompt, rotulo: 'Expressão e câmera (opcional)', placeholder: 'Ex.: fala de forma calorosa e sorri no final', max: 5000, linhas: 2 } : null}
+            prompt={modelo.prompt ? { valor: prompt, aoMudar: setPrompt, rotulo: 'Expressão e câmera (opcional)', placeholder: 'Ex.: fala de forma calorosa e sorri no final', max: modelo.promptMax || 5000, linhas: 2 } : null}
             opcoes={modelo.resolucoes ? <Campo rotulo="Resolução"><Segmentado rotulo="Resolução" opcoes={modelo.resolucoes.map((r) => [r, r])} valor={resolucao} aoMudar={setResolucao} /></Campo> : null}
             resumo={[modelo.nome, base.urls.length ? (fonte === 'foto' ? 'foto ok' : 'vídeo ok') : null, audio.urls.length ? 'áudio ok' : null].filter(Boolean).join(' · ')}
             gerar={{ rotulo: 'Gerar vídeo falado', aoGerar, desativado: !!motivo, motivo, custo }}

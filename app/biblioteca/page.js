@@ -13,6 +13,7 @@ const FILTROS = [
     ['audio', 'Áudios'],
     ['cinema', 'Cinema'],
     ['ferramenta', 'Ferramentas'],
+    ['app', 'Apps'],
     ['favoritos', 'Favoritos'],
 ];
 
@@ -26,7 +27,7 @@ export default function Biblioteca() {
         return itens.filter((i) => {
             if (filtro === 'favoritos' && !i.favorito) return false;
             if (filtro !== 'tudo' && filtro !== 'favoritos' && i.tipo !== filtro) return false;
-            if (termo && !`${i.prompt || ''} ${i.modelo || ''} ${i.detalhes || ''}`.toLowerCase().includes(termo)) return false;
+            if (termo && !`${i.prompt || ''} ${i.modelo || ''} ${i.detalhes || ''} ${i.titulo || ''}`.toLowerCase().includes(termo)) return false;
             return true;
         });
     }, [itens, filtro, busca]);

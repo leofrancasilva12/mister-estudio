@@ -28,8 +28,10 @@ Visual: branco, traços finos, fonte Geist. No computador, painel de criação �
 
 - **Imagem:** Nano Banana Pro, Nano Banana 2, Seedream 5.0 Pro, GPT Image 2, Ideogram V3, Seedream 4.5 e Flux 2 Pro. Criar do zero ou editar com até 16 imagens anexadas.
 - **Vídeo:** Kling 3.0, Veo 3.1, Seedance 2.5, Seedance 2, Wan 3.0 e Hailuo 2.3. A partir de texto, de quadro inicial e final, ou de várias imagens de referência.
-- **Lip Sync:** Kling Avatar, InfiniteTalk e troca de fala em vídeo.
-- **Áudio:** voz em português com ElevenLabs Multilingual v2.
+- **Lip Sync:** Kling Avatar Pro, Kling Avatar, OmniHuman 1.5, InfiniteTalk e troca de fala em vídeo.
+- **Áudio:** narração em português (ElevenLabs Multilingual v2) e diálogo com duas vozes (ElevenLabs V3).
+- **Melhorar prompt:** reescreve sua ideia em um prompt detalhado (LLM do Kie.ai), com botão para desfazer.
+- **Apps:** Personagens, Editar com pincel, Trocar rosto, Trocar roupa, Produto na cena, Mudar fundo, Novo ângulo, Retrato profissional, Pele, Expandir, Trocar pessoa no vídeo, Copiar movimento, Estender vídeo e Transição.
 - **Cinema:** presets de câmera, lente, distância focal e abertura.
 - **Ferramentas:** ampliar imagem (Topaz), ampliar com nitidez (Recraft), remover fundo (Recraft) e ampliar vídeo (Topaz).
 - No celular, o botão **+** da barra anexa fotos; no computador, dá para arrastar ou colar (Ctrl+V).

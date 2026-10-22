@@ -139,7 +139,7 @@ export default function TelaVideo() {
                     {modo === 'referencias' && <Referencias envios={refs} rotulo={`Referências (até ${modelo.maxRefs})`} dica="Rosto, roupa, produto ou cenário. O modelo usa tudo na mesma cena." />}
                 </>
             }
-            prompt={{ valor: prompt, aoMudar: setPrompt, placeholder: modo === 'texto' ? 'Descreva o vídeo que você quer criar' : 'Como a cena se move? Ex.: ela sorri e acena para a câmera', max: 2500, linhas: 3 }}
+            prompt={{ melhorar: 'video', valor: prompt, aoMudar: setPrompt, placeholder: modo === 'texto' ? 'Descreva o vídeo que você quer criar' : 'Como a cena se move? Ex.: ela sorri e acena para a câmera', max: 2500, linhas: 3 }}
             opcoes={
                 <>
                     {modelo.variantes && <Campo rotulo="Versão do Veo"><Segmentado rotulo="Versão" valor={variante} aoMudar={setVariante} opcoes={modelo.variantes} /></Campo>}

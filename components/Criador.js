@@ -4,7 +4,7 @@
 // computador = painel à esquerda + feed à direita; celular = feed + barra de criação + gaveta de ajustes.
 import { useEffect, useState } from 'react';
 import Icone from './Icone';
-import { BotaoGerar, CampoPrompt, FaixaAnexos } from './Controles';
+import { BotaoGerar, BotoesMelhorar, CampoPrompt, FaixaAnexos, useMelhorar } from './Controles';
 import { ListaConversas, TopoConversa } from './Conversas';
 import { useHistorico } from '@/lib/historico';
 import { formatarCreditos } from '@/lib/custos';
@@ -61,17 +61,21 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar: g
     const celular = useEhCelular();
     const [gaveta, setGaveta] = useState(false);
     const { saldo } = useHistorico();
+    // O custo aprendido mora no aparelho: só mostra depois de montar, para o servidor e o navegador desenharem igual
+    const [montado, setMontado] = useState(false);
+    useEffect(() => { setMontado(true); }, []);
     // Bloqueia antes de gastar quando a estimativa passa do saldo
-    const custo = gerarPagina.custo;
+    const custo = montado ? gerarPagina.custo : null;
     const semSaldo = custo?.valor != null && saldo != null && custo.valor > saldo;
     const gerar = semSaldo
-        ? { ...gerarPagina, desativado: true, motivo: `Saldo insuficiente: precisa de ${formatarCreditos(custo.valor)} e você tem ${formatarCreditos(saldo)}. Recarregue no painel do Kie.ai.` }
-        : gerarPagina;
+        ? { ...gerarPagina, custo, desativado: true, motivo: `Saldo insuficiente: precisa de ${formatarCreditos(custo.valor)} e você tem ${formatarCreditos(saldo)}. Recarregue no painel do Kie.ai.` }
+        : { ...gerarPagina, custo };
     const [lista, setLista] = useState(true);
     const [listaCelular, setListaCelular] = useState(false);
     useEffect(() => { try { setLista(localStorage.getItem('mister-estudio:lista') !== 'fechada'); } catch { /* sem armazenamento */ } }, []);
     const mudarLista = (aberta) => { setLista(aberta); try { localStorage.setItem('mister-estudio:lista', aberta ? 'aberta' : 'fechada'); } catch { /* sem armazenamento */ } };
     const arrastando = useArquivosDeFora(aoSoltar);
+    const melhoria = useMelhorar({ valor: prompt?.valor || '', aoMudar: prompt?.aoMudar || (() => {}), melhorar: prompt?.melhorar });
 
     useEffect(() => {
         if (!gaveta) return;
@@ -137,6 +141,7 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar: g
                             <Icone nome="mais" />
                         </button>
                     )}
+                    {prompt?.melhorar && <BotoesMelhorar m={melhoria} compacto />}
                     <button type="button" onClick={() => setGaveta(true)} className="flex h-10 min-w-0 flex-1 items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-xl border border-linha px-2.5 text-xs">
                         <Icone nome="ajustes" tamanho={15} className="flex-none" />
                         <span className="truncate">{resumo}</span>

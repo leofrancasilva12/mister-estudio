@@ -8,6 +8,7 @@ import { baixar } from '@/lib/api';
 import { useHistorico, dataExpiracao } from '@/lib/historico';
 
 const PAGINA = { imagem: '/imagem', video: '/video', lipsync: '/lipsync', cinema: '/cinema', audio: '/audio', ferramenta: '/ferramentas' };
+const paginaDe = (item) => (item.tipo === 'app' && item.appId ? `/apps/${item.appId}` : PAGINA[item.tipo] || '/imagem');
 
 function Atalho({ href, icone, children, aoClicar }) {
     const router = useRouter();
@@ -96,13 +97,16 @@ export default function Visualizador({ itens, id, aoMudar, aoFechar }) {
                         <div className="grid grid-cols-2 gap-2">
                             {item.tipo === 'audio'
                                 ? <Atalho icone="refazer" href={`/audio?${q({ texto: item.prompt || '' })}`}>Reusar texto</Atalho>
-                                : item.prompt ? <Atalho icone="refazer" href={`${PAGINA[item.tipo] || '/imagem'}?${q({ prompt: item.promptOriginal || item.prompt || '' })}`}>Reusar prompt</Atalho> : null}
+                                : item.prompt ? <Atalho icone="refazer" href={`${paginaDe(item)}?${q({ prompt: item.promptOriginal || item.prompt || '' })}`}>Reusar prompt</Atalho> : null}
                             {ehAudio && <Atalho icone="rosto" href={`/lipsync?${q({ audio: item.url })}`}>Usar no Lip Sync</Atalho>}
                             {ehImagem && <Atalho icone="video" href={`/video?${q({ imagem: item.url })}`}>Animar</Atalho>}
                             {ehImagem && <Atalho icone="rosto" href={`/lipsync?${q({ imagem: item.url })}`}>Fazer falar</Atalho>}
                             {ehImagem && <Atalho icone="editar" href={`/imagem?${q({ ref: item.url })}`}>Editar</Atalho>}
                             {ehImagem && <Atalho icone="ampliar" href={`/ferramentas?${q({ ferramenta: 'topaz-imagem', imagem: item.url })}`}>Ampliar</Atalho>}
                             {ehImagem && <Atalho icone="faisca" href={`/ferramentas?${q({ ferramenta: 'recraft-fundo', imagem: item.url })}`}>Tirar fundo</Atalho>}
+                            {ehImagem && <Atalho icone="editar" href={`/apps/pincel?${q({ imagem: item.url })}`}>Editar com pincel</Atalho>}
+                            {ehImagem && <Atalho icone="imagem" href={`/apps/mudar-fundo?${q({ imagem: item.url })}`}>Mudar fundo</Atalho>}
+                            {item.midia === 'video' && <Atalho icone="video" href={`/apps/estender-video?${q({ video: item.url })}`}>Estender vídeo</Atalho>}
                             {item.midia === 'video' && <Atalho icone="ampliar" href={`/ferramentas?${q({ ferramenta: 'topaz-video', video: item.url })}`}>Ampliar vídeo</Atalho>}
                         </div>
                     </div>

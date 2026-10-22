@@ -15,6 +15,7 @@ export const SECOES = [
     { href: '/audio', nome: 'Áudio', icone: 'som' },
     { href: '/cinema', nome: 'Cinema', icone: 'camera' },
     { href: '/ferramentas', nome: 'Ferramentas', icone: 'ampliar' },
+    { href: '/apps', nome: 'Apps', icone: 'faisca' },
     { href: '/biblioteca', nome: 'Biblioteca', icone: 'grade' },
 ];
 
@@ -95,7 +96,7 @@ export function NavInferior() {
     const [mais, setMais] = useState(false);
     useEffect(() => setMais(false), [caminho]);
     const principais = [SECOES[0], SECOES[1], SECOES[2]];
-    const extras = [SECOES[3], SECOES[4], SECOES[5], SECOES[6]];
+    const extras = [SECOES[7], SECOES[3], SECOES[4], SECOES[5], SECOES[6]];
     const maisAtivo = extras.some((s) => ativa(caminho, s.href));
     const item = (s) => {
         const atual = ativa(caminho, s.href);
@@ -114,8 +115,8 @@ export function NavInferior() {
                     <div className="animate-gaveta rounded-t-3xl bg-white px-4 pb-[calc(24px+env(safe-area-inset-bottom))] pt-2">
                         <span aria-hidden="true" className="mx-auto mb-3 block h-1 w-9 rounded bg-black/20" />
                         <div className="grid grid-cols-2 gap-2.5">
-                            {extras.map((s) => (
-                                <Link key={s.href} href={s.href} className="flex min-h-[88px] flex-col justify-between rounded-2xl border border-fina p-3.5">
+                            {extras.map((s, i) => (
+                                <Link key={s.href} href={s.href} onClick={() => setMais(false)} className={`${i === 0 ? 'col-span-2' : ''} flex min-h-[88px] flex-col justify-between rounded-2xl border border-fina p-3.5`}>
                                     <Icone nome={s.icone} tamanho={22} />
                                     <span className="text-sm font-medium">{s.nome}</span>
                                 </Link>
@@ -131,7 +132,7 @@ export function NavInferior() {
                     <Icone nome="pontos" tamanho={22} />
                     Mais
                 </button>
-                {item(SECOES[7])}
+                {item(SECOES[8])}
             </nav>
         </>
     );
