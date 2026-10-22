@@ -150,6 +150,16 @@ function validar(arquivos, aceita, avisar) {
     return ok;
 }
 
+// Lê quantos segundos tem um áudio ou vídeo (usado para estimar o custo)
+function medirDuracao(src, tipo, aoMedir) {
+    const t = (tipo || '').split('/')[0];
+    if (typeof document === 'undefined' || (t !== 'audio' && t !== 'video')) return;
+    const el = document.createElement(t);
+    el.preload = 'metadata';
+    el.onloadedmetadata = () => { if (Number.isFinite(el.duration)) aoMedir(el.duration); };
+    el.src = src;
+}
+
 // Envio de um ou mais arquivos. Cada item: { chave, nome, tipo, previa, url, progresso, erro }
 // escolher() abre a galeria/arquivos; soltar(arquivos) recebe arquivos arrastados ou colados.
 export function useEnvios(maximo = 1, { aceita = 'image/jpeg,image/png,image/webp', avisar } = {}) {
@@ -166,6 +176,7 @@ export function useEnvios(maximo = 1, { aceita = 'image/jpeg,image/png,image/web
         if (!lista.length) return;
         const novos = lista.map((f) => ({ chave: `${f.name}-${f.size}-${Math.random()}`, nome: f.name || 'Arquivo colado', tipo: f.type, previa: URL.createObjectURL(f), progresso: 0, arquivo: f }));
         setItens((atual) => (maximo === 1 ? novos : [...atual.filter((i) => !i.erro), ...novos]));
+        novos.forEach((n) => medirDuracao(n.previa, n.tipo, (d) => setItens((atual) => atual.map((i) => (i.chave === n.chave ? { ...i, duracao: d } : i)))));
         for (const n of novos) {
             try {
                 const url = await enviarArquivo(n.arquivo, (pct) => setItens((atual) => atual.map((i) => (i.chave === n.chave ? { ...i, progresso: pct } : i))));
@@ -184,7 +195,11 @@ export function useEnvios(maximo = 1, { aceita = 'image/jpeg,image/png,image/web
         entrada.onchange = () => adicionar(entrada.files);
         entrada.click();
     };
-    const definirUrl = (url, nome = 'Da biblioteca', tipo = 'image/png') => setItens((atual) => {
+    const definirUrl = (url, nome = 'Da biblioteca', tipo = 'image/png') => {
+        medirDuracao(url, tipo, (d) => setItens((atual) => atual.map((i) => (i.url === url ? { ...i, duracao: d } : i))));
+        return definirUrlBase(url, nome, tipo);
+    };
+    const definirUrlBase = (url, nome, tipo) => setItens((atual) => {
         const item = { chave: url, nome, tipo, previa: url, url, progresso: 100 };
         return maximo === 1 ? [item] : [...atual.filter((i) => i.url !== url), item].slice(0, maximo);
     });
@@ -278,13 +293,17 @@ export function SlotArquivo({ envios, rotulo, vazio, proporcao = '16 / 10', opci
     );
 }
 
-export function BotaoGerar({ rotulo, aoGerar, desativado, motivo }) {
+export function BotaoGerar({ rotulo, aoGerar, desativado, motivo, custo }) {
     return (
         <div className="flex flex-col gap-2">
-            <button type="button" onClick={aoGerar} disabled={desativado} className="flex h-[54px] items-center justify-between rounded-2xl bg-tinta px-[18px] text-[15px] font-medium text-white transition-opacity disabled:opacity-35">
+            <button type="button" onClick={aoGerar} disabled={desativado} className="flex h-[54px] items-center justify-between gap-3 rounded-2xl bg-tinta px-[18px] text-[15px] font-medium text-white transition-opacity disabled:opacity-35">
                 <span>{rotulo}</span>
-                <Icone nome="seta" />
+                <span className="flex items-center gap-2">
+                    {custo?.valor != null && <span className="flex items-center gap-1.5 font-mono text-xs font-normal text-white/75"><Icone nome="moeda" tamanho={13} />{custo.texto}</span>}
+                    <Icone nome="seta" />
+                </span>
             </button>
+            {custo?.valor == null && custo?.texto && <span className="flex items-center gap-1.5 text-xs text-cinza"><Icone nome="moeda" tamanho={13} />{custo.texto}</span>}
             {desativado && motivo && <span className="text-xs text-cinza">{motivo}</span>}
         </div>
     );

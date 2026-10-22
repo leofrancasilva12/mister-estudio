@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Icone, { Logo } from './Icone';
-import { lerCreditos } from '@/lib/api';
 import { useHistorico } from '@/lib/historico';
 
 export const SECOES = [
@@ -50,14 +49,7 @@ function MenuConta() {
 }
 
 function Creditos() {
-    const [valor, setValor] = useState(null);
-    const { itens } = useHistorico();
-    const prontos = itens.filter((i) => i.estado === 'pronto').length;
-    useEffect(() => {
-        let vivo = true;
-        lerCreditos().then((c) => vivo && setValor(c)).catch(() => {});
-        return () => { vivo = false; };
-    }, [prontos]);
+    const { saldo: valor } = useHistorico();
     if (valor === null) return null;
     return (
         <span title="Créditos do Kie.ai" className="flex h-9 items-center gap-2 rounded-full border border-linha px-3 font-mono text-xs text-[#3d3d3d]">

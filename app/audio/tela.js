@@ -7,6 +7,7 @@ import Feed from '@/components/Feed';
 import { Campo } from '@/components/Controles';
 import { VOZES } from '@/lib/modelos';
 import { useHistorico } from '@/lib/historico';
+import { estimarCusto } from '@/lib/custos';
 
 function Deslizante({ id, rotulo, valor, aoMudar, min, max, passo, mostrar }) {
     return (
@@ -31,11 +32,13 @@ export default function TelaAudio() {
     const nomeVoz = VOZES.find(([id]) => id === voz)?.[1];
     const motivo = texto.trim() ? null : 'Escreva o texto da fala.';
 
+    const custo = estimarCusto('voz-multilingual', { letras: texto.trim().length });
+
     const aoGerar = () => {
         if (motivo) { avisar(motivo); return; }
         gerar({
             pedido: { tipo: 'audio', params: { model: 'voz-multilingual', text: texto.trim(), voice: voz, speed: velocidade, stability: estabilidade, style: estilo } },
-            meta: { tipo: 'audio', midia: 'audio', titulo: 'Voz', avisoPronto: 'Voz pronta', prompt: texto.trim(), modelo: 'ElevenLabs Multilingual v2', detalhes: `${nomeVoz} · ${velocidade.toFixed(2).replace('.', ',')}x` },
+            meta: { tipo: 'audio', midia: 'audio', titulo: 'Voz', avisoPronto: 'Voz pronta', prompt: texto.trim(), modelo: 'ElevenLabs Multilingual v2', chaveCusto: custo.chave, detalhes: `${nomeVoz} · ${velocidade.toFixed(2).replace('.', ',')}x` },
         });
     };
 
@@ -68,7 +71,7 @@ export default function TelaAudio() {
                 </Campo>
             }
             resumo={`${nomeVoz} · ${velocidade.toFixed(2).replace('.', ',')}x`}
-            gerar={{ rotulo: 'Gerar voz', aoGerar, desativado: !!motivo, motivo }}
+            gerar={{ rotulo: 'Gerar voz', aoGerar, desativado: !!motivo, motivo, custo }}
             feed={<Feed itens={meus} vazio="Suas vozes aparecem aqui. Depois é só tocar em Usar no Lip Sync para dar voz a um retrato." />}
         />
     );

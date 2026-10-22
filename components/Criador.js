@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import Icone from './Icone';
 import { BotaoGerar, CampoPrompt, FaixaAnexos } from './Controles';
 import { ListaConversas, TopoConversa } from './Conversas';
+import { useHistorico } from '@/lib/historico';
+import { formatarCreditos } from '@/lib/custos';
 
 export function useEhCelular() {
     const [celular, setCelular] = useState(false);
@@ -55,9 +57,16 @@ function useArquivosDeFora(aoSoltar) {
     return arrastando;
 }
 
-export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, feed, anexos = [], aoAnexar, rotuloAnexar = 'Anexar imagem', aoSoltar }) {
+export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar: gerarPagina, feed, anexos = [], aoAnexar, rotuloAnexar = 'Anexar imagem', aoSoltar }) {
     const celular = useEhCelular();
     const [gaveta, setGaveta] = useState(false);
+    const { saldo } = useHistorico();
+    // Bloqueia antes de gastar quando a estimativa passa do saldo
+    const custo = gerarPagina.custo;
+    const semSaldo = custo?.valor != null && saldo != null && custo.valor > saldo;
+    const gerar = semSaldo
+        ? { ...gerarPagina, desativado: true, motivo: `Saldo insuficiente: precisa de ${formatarCreditos(custo.valor)} e você tem ${formatarCreditos(saldo)}. Recarregue no painel do Kie.ai.` }
+        : gerarPagina;
     const [lista, setLista] = useState(true);
     const [listaCelular, setListaCelular] = useState(false);
     useEffect(() => { try { setLista(localStorage.getItem('mister-estudio:lista') !== 'fechada'); } catch { /* sem armazenamento */ } }, []);
@@ -132,7 +141,9 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, f
                         <Icone nome="ajustes" tamanho={15} className="flex-none" />
                         <span className="truncate">{resumo}</span>
                     </button>
-                    <button type="button" onClick={gerar.aoGerar} disabled={gerar.desativado} className="h-10 flex-none rounded-xl bg-tinta px-4 text-sm font-medium text-white disabled:opacity-35">Gerar</button>
+                    <button type="button" onClick={gerar.aoGerar} disabled={gerar.desativado} className="flex h-10 flex-none items-center gap-1.5 rounded-xl bg-tinta px-4 text-sm font-medium text-white disabled:opacity-35">
+                        Gerar{custo?.valor != null && <span className="font-mono text-[11px] font-normal text-white/75">{formatarCreditos(custo.valor)}</span>}
+                    </button>
                 </div>
             </div>
             {gaveta && (

@@ -7,6 +7,7 @@ import Feed from '@/components/Feed';
 import { Campo, Interruptor, Pilulas, Proporcoes, Referencias, Segmentado, SeletorModelo, SlotArquivo, useEnvios } from '@/components/Controles';
 import { CAMERAS_VIDEO, MODELOS_VIDEO, rotuloProporcao } from '@/lib/modelos';
 import { useHistorico } from '@/lib/historico';
+import { estimarCusto } from '@/lib/custos';
 
 const MODOS = [['texto', 'Texto'], ['quadros', 'Imagem'], ['referencias', 'Referências']];
 const ajustar = (lista, valor, padrao) => (lista.includes(valor) ? valor : (padrao ?? lista[0]));
@@ -93,6 +94,8 @@ export default function TelaVideo() {
         modo === 'quadros' && final.urls.length ? 'início e fim' : null,
     ].filter(Boolean);
 
+    const custo = estimarCusto(modelo.id, { modo, res: resolucao, variante: modelo.variantes ? variante : undefined, dur: veoRef ? 8 : Number(duracao), audio: modelo.audio ? audio : false });
+
     const aoGerar = () => {
         if (motivo) { avisar(motivo); return; }
         const cameraTexto = CAMERAS_VIDEO.find(([n]) => n === camera)?.[1];
@@ -107,6 +110,7 @@ export default function TelaVideo() {
             meta: {
                 tipo: 'video', midia: 'video', titulo: 'Vídeo', avisoPronto: 'Vídeo pronto', prompt: textoFinal, promptOriginal: prompt.trim(), modelo: modelo.nome,
                 proporcao: proporcoes.length && proporcao.includes(':') ? proporcao : '16:9',
+                chaveCusto: custo.chave,
                 detalhes: partes.join(' · '),
             },
         });
@@ -148,7 +152,7 @@ export default function TelaVideo() {
                 </>
             }
             resumo={partes.join(' · ')}
-            gerar={{ rotulo: 'Gerar vídeo', aoGerar, desativado: !!motivo, motivo }}
+            gerar={{ rotulo: 'Gerar vídeo', aoGerar, desativado: !!motivo, motivo, custo }}
             feed={<Feed itens={meus} vazio="Seus vídeos aparecem aqui. Toque em + para animar uma foto. Vídeos levam de 1 a 5 minutos." />}
         />
     );

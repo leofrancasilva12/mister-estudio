@@ -7,6 +7,7 @@ import Feed from '@/components/Feed';
 import { Campo, Pilulas, Proporcoes, Segmentado } from '@/components/Controles';
 import { CINEMA, promptCinema, razaoCss } from '@/lib/modelos';
 import { useHistorico } from '@/lib/historico';
+import { estimarCusto } from '@/lib/custos';
 
 function Visor({ camera, lente, focal, abertura, proporcao, qualidade }) {
     return (
@@ -39,6 +40,8 @@ export default function TelaCinema() {
     const efeito = `${focal} mm: ${CINEMA.focais.find((f) => f[0] === focal)[2]}. ${abertura}: ${CINEMA.aberturas.find((a) => a[0] === abertura)[2]}.`;
     const motivo = prompt.trim() ? null : 'Descreva a cena.';
 
+    const custo = estimarCusto('nano-banana-2', { modo: 'criar', res: qualidade });
+
     const aoGerar = () => {
         if (motivo) { avisar(motivo); return; }
         const final = promptCinema(prompt.trim(), camera, lente, focal, abertura);
@@ -46,6 +49,7 @@ export default function TelaCinema() {
             pedido: { tipo: 'imagem', params: { model: 'nano-banana-2', prompt: final, aspect_ratio: proporcao, resolution: qualidade } },
             meta: {
                 tipo: 'cinema', midia: 'imagem', titulo: 'Cena', avisoPronto: 'Cena pronta', prompt: prompt.trim(), modelo: 'Nano Banana 2', proporcao,
+                chaveCusto: custo.chave,
                 detalhes: `${camera} · ${lente} · ${focal}mm · ${abertura}`,
             },
         });
@@ -75,7 +79,7 @@ export default function TelaCinema() {
                 </>
             }
             resumo={`${camera} · ${focal}mm · ${abertura}`}
-            gerar={{ rotulo: 'Rodar a cena', aoGerar, desativado: !!motivo, motivo }}
+            gerar={{ rotulo: 'Rodar a cena', aoGerar, desativado: !!motivo, motivo, custo }}
             feed={
                 <div className="flex flex-col gap-5">
                     <Visor camera={camera} lente={lente} focal={focal} abertura={abertura} proporcao={proporcao} qualidade={qualidade} />

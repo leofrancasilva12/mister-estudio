@@ -7,6 +7,7 @@ import Feed from '@/components/Feed';
 import { Campo, Proporcoes, Referencias, Segmentado, SeletorModelo, useEnvios } from '@/components/Controles';
 import { MODELOS_IMAGEM, rotuloProporcao } from '@/lib/modelos';
 import { useHistorico } from '@/lib/historico';
+import { estimarCusto } from '@/lib/custos';
 
 const QUE_EDITA = MODELOS_IMAGEM.find((m) => m.editar);
 
@@ -58,6 +59,8 @@ export default function TelaImagem() {
     else if (editar && !refs.urls.length) motivo = 'Anexe pelo menos uma imagem.';
     else if (modelo.id === 'gpt-image-2' && qualidade === '2K' && ['4:5', '5:4'].includes(proporcao)) motivo = 'O GPT Image 2 não faz 4:5 ou 5:4 em 2K. Use 1K ou 4K.';
 
+    const custo = estimarCusto(editar ? modelo.editar : modelo.criar, { modo: editar ? 'editar' : 'criar', res: qualidade }, quantidade);
+
     const aoGerar = () => {
         if (motivo) { avisar(motivo); return; }
         const params = { model: editar ? modelo.editar : modelo.criar, prompt: prompt.trim(), aspect_ratio: proporcao, [modelo.qualidade.campo]: qualidade };
@@ -67,6 +70,7 @@ export default function TelaImagem() {
             pedido: { tipo: editar ? 'edicao' : 'imagem', params },
             meta: {
                 tipo: 'imagem', midia: 'imagem', titulo: 'Imagem', avisoPronto: 'Imagem pronta', prompt: prompt.trim(), modelo: modelo.nome, proporcao,
+                chaveCusto: custo.chave,
                 detalhes: `${modelo.nome} · ${rotuloProporcao(proporcao)} · ${rotuloQualidade}${editar ? ` · ${refs.urls.length} ref.` : ''}`,
             },
         });
@@ -101,7 +105,7 @@ export default function TelaImagem() {
                 </>
             }
             resumo={`${modelo.nome} · ${rotuloProporcao(proporcao)} · ${rotuloQualidade}${quantidade > 1 ? ` · ${quantidade}x` : ''}`}
-            gerar={{ rotulo: quantidade > 1 ? `Gerar ${quantidade} imagens` : 'Gerar imagem', aoGerar, desativado: !!motivo, motivo }}
+            gerar={{ rotulo: quantidade > 1 ? `Gerar ${quantidade} imagens` : 'Gerar imagem', aoGerar, desativado: !!motivo, motivo, custo }}
             feed={<Feed itens={meus} vazio="Suas imagens aparecem aqui. Escreva um prompt e toque em Gerar, ou toque em + para editar uma foto sua." />}
         />
     );

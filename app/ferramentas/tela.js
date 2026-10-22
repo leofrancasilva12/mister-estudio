@@ -7,6 +7,7 @@ import Feed from '@/components/Feed';
 import { Campo, Segmentado, SlotArquivo, useEnvios } from '@/components/Controles';
 import { FERRAMENTAS } from '@/lib/modelos';
 import { useHistorico } from '@/lib/historico';
+import { estimarCusto } from '@/lib/custos';
 
 export default function TelaFerramentas() {
     const busca = useSearchParams();
@@ -38,6 +39,8 @@ export default function TelaFerramentas() {
     if (arquivo.enviando) motivo = 'Esperando o envio terminar.';
     else if (!arquivo.urls.length) motivo = ferramenta.entrada === 'video' ? 'Anexe o vídeo.' : 'Anexe a imagem.';
 
+    const custo = estimarCusto(ferramenta.id, { fator: ferramenta.fatores ? Number(fator) : undefined });
+
     const aoGerar = () => {
         if (motivo) { avisar(motivo); return; }
         const params = { model: ferramenta.id, fator };
@@ -47,6 +50,7 @@ export default function TelaFerramentas() {
             meta: {
                 tipo: 'ferramenta', midia: ferramenta.entrada === 'video' ? 'video' : 'imagem', titulo: ferramenta.nome, avisoPronto: `${ferramenta.nome}: pronto`,
                 prompt: '', modelo: ferramenta.motor, proporcao: ferramenta.entrada === 'video' ? '16:9' : 'auto',
+                chaveCusto: custo.chave,
                 detalhes: [ferramenta.nome, ferramenta.fatores ? `${fator}x` : null].filter(Boolean).join(' · '),
             },
         });
@@ -80,7 +84,7 @@ export default function TelaFerramentas() {
             prompt={null}
             opcoes={ferramenta.fatores ? <Campo rotulo="Aumento"><Segmentado rotulo="Aumento" valor={fator} aoMudar={setFator} opcoes={[['2', '2x'], ['4', '4x']]} /></Campo> : null}
             resumo={[ferramenta.nome, ferramenta.fatores ? `${fator}x` : null, arquivo.urls.length ? 'arquivo ok' : null].filter(Boolean).join(' · ')}
-            gerar={{ rotulo: ferramenta.nome, aoGerar, desativado: !!motivo, motivo }}
+            gerar={{ rotulo: ferramenta.nome, aoGerar, desativado: !!motivo, motivo, custo }}
             feed={<Feed itens={meus} vazio="Toque em + para anexar uma imagem ou vídeo. Também dá para mandar direto do visualizador, pelos botões Ampliar e Tirar fundo." />}
         />
     );

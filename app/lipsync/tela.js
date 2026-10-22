@@ -7,6 +7,7 @@ import Feed from '@/components/Feed';
 import { Campo, Segmentado, SlotArquivo, useEnvios } from '@/components/Controles';
 import { MODELOS_LIPSYNC } from '@/lib/modelos';
 import { useHistorico } from '@/lib/historico';
+import { estimarCusto } from '@/lib/custos';
 
 const AUDIOS = 'audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/aac,audio/mp4,audio/x-m4a,audio/ogg';
 
@@ -51,6 +52,8 @@ export default function TelaLipSync() {
     else if (!base.urls.length) motivo = fonte === 'foto' ? 'Anexe a foto do rosto.' : 'Anexe o vídeo.';
     else if (!audio.urls.length) motivo = 'Anexe o áudio da fala.';
 
+    const custo = estimarCusto(modelo.id, { res: modelo.resolucoes ? resolucao : undefined, durAudio: audio.itens[0]?.duracao });
+
     const aoGerar = () => {
         if (motivo) { avisar(motivo); return; }
         const params = { model: modelo.id, audio_url: audio.urls[0] };
@@ -62,6 +65,7 @@ export default function TelaLipSync() {
             meta: {
                 tipo: 'lipsync', midia: 'video', titulo: 'Lip Sync', avisoPronto: 'Vídeo falado pronto', prompt: prompt.trim(), modelo: modelo.nome,
                 proporcao: fonte === 'foto' ? '3:4' : '16:9',
+                chaveCusto: custo.chave,
                 detalhes: [modelo.nome, modelo.resolucoes ? resolucao : null].filter(Boolean).join(' · '),
             },
         });
@@ -98,7 +102,7 @@ export default function TelaLipSync() {
             prompt={modelo.prompt ? { valor: prompt, aoMudar: setPrompt, rotulo: 'Expressão e câmera (opcional)', placeholder: 'Ex.: fala de forma calorosa e sorri no final', max: 5000, linhas: 2 } : null}
             opcoes={modelo.resolucoes ? <Campo rotulo="Resolução"><Segmentado rotulo="Resolução" opcoes={modelo.resolucoes.map((r) => [r, r])} valor={resolucao} aoMudar={setResolucao} /></Campo> : null}
             resumo={[modelo.nome, base.urls.length ? (fonte === 'foto' ? 'foto ok' : 'vídeo ok') : null, audio.urls.length ? 'áudio ok' : null].filter(Boolean).join(' · ')}
-            gerar={{ rotulo: 'Gerar vídeo falado', aoGerar, desativado: !!motivo, motivo }}
+            gerar={{ rotulo: 'Gerar vídeo falado', aoGerar, desativado: !!motivo, motivo, custo }}
             feed={<Feed itens={meus} vazio="Toque em + para anexar uma foto e depois um áudio: o retrato ganha voz e expressão. O vídeo dura o mesmo tempo do áudio." />}
         />
     );

@@ -83,6 +83,7 @@ export default function Visualizador({ itens, id, aoMudar, aoFechar }) {
                     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-[13px]">
                         <dt className="text-cinza">Modelo</dt><dd>{item.modelo}</dd>
                         {item.detalhes && <><dt className="text-cinza">Ajustes</dt><dd>{item.detalhes.replace(`${item.modelo} · `, '')}</dd></>}
+                        {item.creditos && <><dt className="text-cinza">Custo</dt><dd>{Number(item.creditos).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} créditos</dd></>}
                         <dt className="text-cinza">Criado</dt><dd>{new Date(item.criadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</dd>
                         {expira && <><dt className="text-cinza">Expira no Kie.ai</dt><dd>{expira.toLocaleDateString('pt-BR')}</dd></>}
                     </dl>
