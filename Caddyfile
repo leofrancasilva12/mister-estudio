@@ -1,23 +1,13 @@
-# Portaria do Estúdio: HTTPS automático + usuário e senha na frente de tudo.
+# Portaria do Estúdio: HTTPS automático. O login agora é feito pela tela do próprio app.
 {$DOMINIO} {
 	encode zstd gzip
 
-	# Endereço de saúde fica aberto (não mostra nada sensível)
-	@saude path /api/saude
-	handle @saude {
-		reverse_proxy estudio:3000
-	}
-
-	handle {
-		basic_auth {
-			{$ESTUDIO_USUARIO} {$ESTUDIO_SENHA_HASH}
-		}
-		reverse_proxy estudio:3000
-	}
+	reverse_proxy estudio:3000
 
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
 		-Server
 	}

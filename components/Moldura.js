@@ -21,6 +21,34 @@ export const SECOES = [
 
 const ativa = (caminho, href) => (href === '/' ? caminho === '/' : caminho.startsWith(href));
 
+export async function sair() {
+    try { await fetch('/api/sair', { method: 'POST' }); } catch { /* segue mesmo assim */ }
+    window.location.href = '/login';
+}
+
+function MenuConta() {
+    const [aberto, setAberto] = useState(false);
+    useEffect(() => {
+        if (!aberto) return;
+        const fechar = (e) => { if (!e.target.closest?.('[data-menu-conta]')) setAberto(false); };
+        const esc = (e) => e.key === 'Escape' && setAberto(false);
+        document.addEventListener('pointerdown', fechar);
+        document.addEventListener('keydown', esc);
+        return () => { document.removeEventListener('pointerdown', fechar); document.removeEventListener('keydown', esc); };
+    }, [aberto]);
+    return (
+        <div data-menu-conta className="relative">
+            <button type="button" aria-label="Conta" aria-expanded={aberto} onClick={() => setAberto((a) => !a)} className="flex h-11 w-11 items-center justify-center rounded-full border border-linha text-sm font-medium">L</button>
+            {aberto && (
+                <div className="absolute right-0 top-[52px] z-40 w-56 animate-subir rounded-2xl border border-linha bg-white p-1.5 shadow-[0_12px_32px_rgba(17,17,17,0.10)]">
+                    <span className="block px-3 py-2 text-xs text-cinza">Conectado como leo</span>
+                    <button type="button" onClick={sair} className="flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-sm hover:bg-pedra"><Icone nome="sair" tamanho={17} />Sair da conta</button>
+                </div>
+            )}
+        </div>
+    );
+}
+
 function Creditos() {
     const [valor, setValor] = useState(null);
     const { itens } = useHistorico();
@@ -64,6 +92,7 @@ export function Cabecalho() {
             </nav>
             <div className="ml-auto flex items-center gap-2.5">
                 <Creditos />
+                <MenuConta />
             </div>
         </header>
     );
@@ -100,6 +129,7 @@ export function NavInferior() {
                                 </Link>
                             ))}
                         </div>
+                        <button type="button" onClick={sair} className="mt-2.5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-fina text-sm text-alerta"><Icone nome="sair" tamanho={17} />Sair da conta</button>
                     </div>
                 </div>
             )}

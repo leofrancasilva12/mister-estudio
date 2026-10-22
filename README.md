@@ -108,7 +108,8 @@ docker compose up -d       # reinicia com a nova configuração
 ## Segurança
 
 - A chave do Kie.ai fica só no `.env` da VPS. O `.env` está no `.gitignore` e nunca vai para o GitHub.
-- Tudo exige usuário e senha, menos `/api/saude`.
+- Tudo exige login pela tela do app, menos `/api/saude`. O botão **Sair** fica no menu da bolinha do topo (no celular, em **Mais**).
+- Depois de 5 senhas erradas seguidas, o login trava por 5 minutos.
 - O app não abre porta própria. Só o Caddy, nas portas 80 e 443, fala com ele.
 - O servidor só aceita os modelos da lista e confere as opções antes de gastar créditos.
 - O Kie.ai apaga os arquivos gerados depois de alguns dias. Baixe o que quiser guardar. A galeria permanente vem com o Supabase.
