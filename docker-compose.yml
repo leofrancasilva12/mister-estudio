@@ -1,0 +1,27 @@
+services:
+  estudio:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    # Sem "ports": o app NÃO fica aberto para a internet. Só o Caddy fala com ele.
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    env_file: .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_dados:/data
+      - caddy_config:/config
+    depends_on:
+      - estudio
+
+volumes:
+  caddy_dados:
+  caddy_config:
