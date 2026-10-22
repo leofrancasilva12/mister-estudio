@@ -36,6 +36,19 @@ services:
       - "3334"
     mem_limit: 128m
 
+  # Mister Video MCP: transcrição de vídeos do YouTube (grátis, sem chave de API)
+  video-mcp:
+    build: ./video
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORTA: 3335
+      VIDEO_TOKEN: ${VIDEO_TOKEN}
+      HOSTS_PERMITIDOS: ${DOMINIO}
+    expose:
+      - "3335"
+    mem_limit: 128m
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -51,6 +64,7 @@ services:
     depends_on:
       - estudio-mcp
       - pesquisa-mcp
+      - video-mcp
 
 volumes:
   caddy_dados:

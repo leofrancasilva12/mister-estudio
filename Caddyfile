@@ -8,6 +8,9 @@
 	handle /pesquisa/* {
 		reverse_proxy pesquisa-mcp:3334
 	}
+	handle /video/* {
+		reverse_proxy video-mcp:3335
+	}
 	handle {
 		respond "Mister Studio MCP" 404
 	}

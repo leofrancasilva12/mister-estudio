@@ -30,6 +30,17 @@ Pesquisa na web com fontes, usando os modelos Sonar da Perplexity pelo OpenRoute
 | `gastos_pesquisa` | Gasto do dia e teto (`PESQUISA_LIMITE_USD_DIA`, padrão US$ 2) |
 | `ultimas_noticias` | Últimas notícias por RSS (g1 por editoria ou qualquer feed https). Grátis |
 
+## Mister Video MCP (pasta `video/`)
+
+Transcreve vídeos do YouTube pela legenda (manual ou automática). Grátis, sem chave de API. Endereço: `https://SEU_DOMINIO/video/mcp` (cabeçalho `Authorization: Bearer VIDEO_TOKEN` ou a chave no fim do endereço: `/video/mcp/VIDEO_TOKEN`).
+
+| Ferramenta | O que faz |
+|---|---|
+| `transcrever_youtube` | Transcrição com horário (blocos de 30 s) ou texto corrido. Escolhe o idioma (`pt`, `en`...), aceita `inicio_segundos` para vídeos longos e `max_caracteres` |
+| `info_youtube` | Título, canal, duração, descrição e idiomas de legenda disponíveis |
+
+Limites: só lê o que é falado (não vê imagens) e só funciona em vídeos com legenda. O YouTube pode bloquear servidores de nuvem de vez em quando; nesse caso a ferramenta avisa em português.
+
 ## Estrutura
 
 | Caminho | Para que serve |
