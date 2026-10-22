@@ -337,7 +337,7 @@ export function BotaoGerar({ rotulo, aoGerar, desativado, motivo, custo }) {
             <button type="button" onClick={aoGerar} disabled={desativado} className="flex h-[54px] items-center justify-between gap-3 rounded-2xl bg-tinta px-[18px] text-[15px] font-medium text-white transition-opacity disabled:opacity-35">
                 <span>{rotulo}</span>
                 <span className="flex items-center gap-2">
-                    {custo?.valor != null && <span className="flex items-center gap-1.5 font-mono text-xs font-normal text-white/75"><Icone nome="moeda" tamanho={13} />{custo.texto}</span>}
+                    {custo?.valor != null && <span className="flex items-center gap-1.5 font-mono text-xs font-normal text-ouro"><Icone nome="moeda" tamanho={13} />{custo.texto}</span>}
                     <Icone nome="seta" />
                 </span>
             </button>

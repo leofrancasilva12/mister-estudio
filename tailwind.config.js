@@ -12,6 +12,8 @@ module.exports = {
                 linha: 'rgba(17,17,17,0.12)',
                 fina: 'rgba(17,17,17,0.08)',
                 alerta: '#a32d2d',
+                ouro: '#E3C35A', // dourado da marca, sobre o preto
+                'ouro-escuro': '#8A6A12', // dourado legível sobre o branco
             },
             fontFamily: {
                 sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],

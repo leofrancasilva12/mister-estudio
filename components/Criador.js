@@ -147,7 +147,7 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar: g
                         <span className="truncate">{resumo}</span>
                     </button>
                     <button type="button" onClick={gerar.aoGerar} disabled={gerar.desativado} className="flex h-10 flex-none items-center gap-1.5 rounded-xl bg-tinta px-4 text-sm font-medium text-white disabled:opacity-35">
-                        Gerar{custo?.valor != null && <span className="font-mono text-[11px] font-normal text-white/75">{formatarCreditos(custo.valor)}</span>}
+                        Gerar{custo?.valor != null && <span className="font-mono text-[11px] font-normal text-ouro">{formatarCreditos(custo.valor)}</span>}
                     </button>
                 </div>
             </div>

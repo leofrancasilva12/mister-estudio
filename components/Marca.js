@@ -19,8 +19,8 @@ export function Abertura() {
         let jaViu = false;
         try { jaViu = !!sessionStorage.getItem(CHAVE_ABERTURA); sessionStorage.setItem(CHAVE_ABERTURA, '1'); } catch { /* sem armazenamento: mostra */ }
         if (jaViu) { setVisivel(false); return undefined; }
-        const t1 = setTimeout(() => setSaindo(true), 1750);
-        const t2 = setTimeout(() => setVisivel(false), 2150);
+        const t1 = setTimeout(() => setSaindo(true), 2100);
+        const t2 = setTimeout(() => setVisivel(false), 2450);
         return () => { clearTimeout(t1); clearTimeout(t2); };
     }, []);
     if (!visivel) return null;
@@ -35,6 +35,7 @@ export function Abertura() {
             <div className="flex flex-col items-center gap-3">
                 <NomeMarca className="ab-nome text-[40px] leading-none md:text-[52px]" />
                 <span className="ab-frase text-[11px] font-medium uppercase text-[#3d3d3d] md:text-[12px]">Vídeos com inteligência</span>
+                <span aria-hidden="true" className="ab-fio mt-1 block h-px w-[140px] md:w-[180px]" style={{ background: 'linear-gradient(90deg, transparent, #D4AF37 20%, #F3DE9A 50%, #D4AF37 80%, transparent)' }} />
             </div>
             <span className="sr-only">Mister Studio</span>
         </div>

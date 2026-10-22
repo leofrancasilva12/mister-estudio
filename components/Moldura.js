@@ -53,8 +53,8 @@ function Creditos() {
     const { saldo: valor } = useHistorico();
     if (valor === null) return null;
     return (
-        <span title="Créditos do Kie.ai" className="flex h-9 items-center gap-2 rounded-full border border-linha px-3 font-mono text-xs text-[#3d3d3d]">
-            <Icone nome="moeda" tamanho={14} />
+        <span title="Créditos do Kie.ai" className="flex h-9 items-center gap-2 rounded-full border border-[#D4AF37]/50 px-3 font-mono text-xs text-[#3d3d3d]">
+            <span className="text-ouro-escuro"><Icone nome="moeda" tamanho={14} /></span>
             {Number(valor).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}
         </span>
     );
