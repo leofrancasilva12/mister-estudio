@@ -22,6 +22,9 @@ export const config = {
   // "kie" usa a API do Kie.ai de verdade (próxima etapa).
   provedor: (process.env.PROVEDOR ?? "simulado") as "simulado" | "kie",
 
+  // Teto de créditos por dia gastos pelo Claude (proteção contra uso exagerado). 0 = sem teto.
+  limiteDiario: Number(process.env.MCP_LIMITE_CREDITOS_DIA ?? 600),
+
   // Quantos segundos a geração simulada demora, para imitar a vida real.
   segundosSimulados: Number(process.env.SEGUNDOS_SIMULADOS ?? 8),
 };

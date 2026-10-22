@@ -1,6 +1,6 @@
 {
   "name": "estudio-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Servidor MCP do Estúdio: gera imagens e vídeos com IA e guarda na galeria",
   "main": "dist/index.js",
   "scripts": {
@@ -15,6 +15,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "express": "^5.3.0",
+    "sharp": "^0.34.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {

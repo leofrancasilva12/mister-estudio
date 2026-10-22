@@ -14,6 +14,9 @@ export interface PedidoGeracao {
   formato: Formato;
   duracaoSegundos?: number; // só para vídeo
   referencias?: string[]; // links de imagens de referência (ex.: fotos do personagem)
+  modelo?: string; // ex.: nano-banana-pro, gpt-image-2, kling-3, veo-3-1-rapido
+  qualidade?: string; // imagem: 1K, 2K ou 4K
+  imagemInicial?: string; // vídeo: anima a partir desta imagem
 }
 
 export type SituacaoTarefa = "na_fila" | "gerando" | "pronta" | "falhou";
@@ -25,6 +28,8 @@ export interface Tarefa {
   progresso: number; // de 0 a 100
   resultadoUrl?: string;
   erro?: string;
+  creditos?: number; // créditos que o Kie.ai cobrou
+  modeloKie?: string;
   criadaEm: string;
 }
 

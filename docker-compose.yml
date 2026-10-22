@@ -7,7 +7,7 @@ services:
     expose:
       - "3000"
 
-  # MCP do Estúdio: deixa o Claude gerar imagens e vídeos (etapa 1: gerador simulado)
+  # MCP do Estúdio: deixa o Claude gerar imagens e vídeos com o Kie.ai
   estudio-mcp:
     build: ./mcp
     restart: unless-stopped
@@ -17,7 +17,9 @@ services:
       PORTA: 3333
       MCP_TOKEN: ${MCP_TOKEN}
       HOSTS_PERMITIDOS: ${DOMINIO}
-      PROVEDOR: simulado
+      PROVEDOR: ${MCP_PROVEDOR:-kie}
+      KIE_API_KEY: ${KIE_API_KEY}
+      MCP_LIMITE_CREDITOS_DIA: ${MCP_LIMITE_CREDITOS_DIA:-600}
     expose:
       - "3333"
     mem_limit: 256m

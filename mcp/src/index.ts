@@ -7,13 +7,15 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { config } from "./config.js";
 import { registrarFerramentas } from "./ferramentas.js";
 import { criarProvedorSimulado } from "./provedores/simulado.js";
+import { criarProvedorKie } from "./provedores/kie.js";
 import type { Provedor } from "./provedores/tipos.js";
 
 // Ponto de partida: escolhe o provedor, monta o servidor e liga no modo certo.
 
 function escolherProvedor(): Provedor {
   if (config.provedor === "kie") {
-    throw new Error("O provedor Kie.ai entra na próxima etapa. Por enquanto use PROVEDOR=simulado.");
+    if (!process.env.KIE_API_KEY) throw new Error("PROVEDOR=kie precisa da KIE_API_KEY.");
+    return criarProvedorKie();
   }
   return criarProvedorSimulado(config.segundosSimulados);
 }
@@ -22,7 +24,7 @@ function escolherProvedor(): Provedor {
 const provedor = escolherProvedor();
 
 function criarServidor(): McpServer {
-  const server = new McpServer({ name: "estudio", version: "0.1.0" });
+  const server = new McpServer({ name: "estudio", version: "0.2.0" });
   registrarFerramentas(server, provedor);
   return server;
 }
