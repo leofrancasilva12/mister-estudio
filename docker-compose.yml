@@ -21,6 +21,21 @@ services:
       - "3333"
     mem_limit: 256m
 
+  # Mister Pesquisa MCP: pesquisa na web com fontes (Perplexity Sonar via OpenRouter)
+  pesquisa-mcp:
+    build: ./pesquisa
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORTA: 3334
+      PESQUISA_TOKEN: ${PESQUISA_TOKEN}
+      HOSTS_PERMITIDOS: ${DOMINIO}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      PESQUISA_LIMITE_USD_DIA: ${PESQUISA_LIMITE_USD_DIA:-2}
+    expose:
+      - "3334"
+    mem_limit: 128m
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -35,6 +50,7 @@ services:
       - caddy_config:/config
     depends_on:
       - estudio-mcp
+      - pesquisa-mcp
 
 volumes:
   caddy_dados:

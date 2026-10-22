@@ -19,6 +19,16 @@ Conector do Claude para gerar **imagens, vídeos e avatares falantes** com os mo
 
 Teto diário de créditos: `MCP_LIMITE_CREDITOS_DIA` (padrão 600).
 
+## Mister Pesquisa MCP (pasta `pesquisa/`)
+
+Pesquisa na web com fontes, usando os modelos Sonar da Perplexity pelo OpenRouter. Endereço: `https://SEU_DOMINIO/pesquisa/mcp` (cabeçalho `Authorization: Bearer PESQUISA_TOKEN`).
+
+| Ferramenta | O que faz |
+|---|---|
+| `pesquisar` | Responde com fontes. Níveis: `rapida` (sonar), `completa` (sonar-pro), `raciocinio` (sonar-reasoning-pro) |
+| `pesquisa_profunda` / `ver_pesquisa` | Relatório completo (sonar-deep-research), em segundo plano, de 2 a 10 min |
+| `gastos_pesquisa` | Gasto do dia e teto (`PESQUISA_LIMITE_USD_DIA`, padrão US$ 2) |
+
 ## Estrutura
 
 | Caminho | Para que serve |

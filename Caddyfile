@@ -5,6 +5,9 @@
 	handle /mcp* {
 		reverse_proxy estudio-mcp:3333
 	}
+	handle /pesquisa/* {
+		reverse_proxy pesquisa-mcp:3334
+	}
 	handle {
 		respond "Mister Studio MCP" 404
 	}
