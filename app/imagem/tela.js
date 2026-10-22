@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Criador from '@/components/Criador';
 import Feed from '@/components/Feed';
 import { Campo, Proporcoes, Referencias, Segmentado, SeletorModelo, useEnvios } from '@/components/Controles';
 import { MODELOS_IMAGEM, rotuloProporcao } from '@/lib/modelos';
 import { useHistorico } from '@/lib/historico';
+
+const QUE_EDITA = MODELOS_IMAGEM.find((m) => m.editar);
 
 export default function TelaImagem() {
     const busca = useSearchParams();
@@ -18,31 +20,41 @@ export default function TelaImagem() {
     const [proporcao, setProporcao] = useState(modelo.proporcaoPadrao);
     const [qualidade, setQualidade] = useState(modelo.qualidade.padrao);
     const [quantidade, setQuantidade] = useState(1);
-    const refs = useEnvios(modelo.maxRefs);
+    const refs = useEnvios(Math.max(1, modelo.maxRefs), { avisar });
 
-    // Vindo de outra tela: ?prompt=... ou ?ref=<imagem>
+    const trocarModelo = useCallback((id) => {
+        const m = MODELOS_IMAGEM.find((x) => x.id === id);
+        setModeloId(id);
+        setProporcao((p) => (m.proporcoes.includes(p) ? p : m.proporcaoPadrao));
+        setQualidade((q) => (m.qualidade.opcoes.some(([v]) => v === q) ? q : m.qualidade.padrao));
+        if (!m.editar) setModo('criar');
+    }, []);
+
+    // Entrar no modo de edição; se o modelo atual não edita, troca para um que edita
+    const irParaEdicao = useCallback(() => {
+        if (!modelo.editar) { trocarModelo(QUE_EDITA.id); avisar(`Trocamos para ${QUE_EDITA.nome}, que edita imagens.`); }
+        setModo('editar');
+    }, [modelo.editar, trocarModelo, avisar]);
+
     useEffect(() => {
         const p = busca.get('prompt');
         const r = busca.get('ref');
         if (p) setPrompt(p);
-        if (r) { setModo('editar'); refs.definirUrl(r); }
+        if (r) { irParaEdicao(); refs.definirUrl(r); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [busca]);
 
-    const trocarModelo = (id) => {
-        const m = MODELOS_IMAGEM.find((x) => x.id === id);
-        setModeloId(id);
-        if (!m.proporcoes.includes(proporcao)) setProporcao(m.proporcaoPadrao);
-        if (!m.qualidade.opcoes.some(([v]) => v === qualidade)) setQualidade(m.qualidade.padrao);
-    };
+    const anexar = () => { irParaEdicao(); refs.escolher(); };
+    const soltar = useCallback((arquivos) => { irParaEdicao(); refs.soltar(arquivos); }, [irParaEdicao, refs]);
 
     const rotuloQualidade = modelo.qualidade.opcoes.find(([v]) => v === qualidade)?.[1] || qualidade;
     const editar = modo === 'editar';
 
     let motivo = null;
-    if (!prompt.trim()) motivo = editar ? 'Descreva o que mudar nas referências.' : 'Escreva um prompt para gerar.';
+    if (!prompt.trim()) motivo = editar ? 'Descreva o que mudar nas imagens.' : 'Escreva um prompt para gerar.';
     else if (editar && refs.enviando) motivo = 'Esperando o envio das imagens terminar.';
-    else if (editar && !refs.urls.length) motivo = 'Envie pelo menos uma imagem de referência.';
+    else if (editar && !refs.urls.length) motivo = 'Anexe pelo menos uma imagem.';
+    else if (modelo.id === 'gpt-image-2' && qualidade === '2K' && ['4:5', '5:4'].includes(proporcao)) motivo = 'O GPT Image 2 não faz 4:5 ou 5:4 em 2K. Use 1K ou 4K.';
 
     const aoGerar = () => {
         if (motivo) { avisar(motivo); return; }
@@ -59,15 +71,21 @@ export default function TelaImagem() {
     };
 
     const meus = useMemo(() => itens.filter((i) => i.tipo === 'imagem'), [itens]);
+    const opcoesModo = modelo.editar ? [['criar', 'Criar'], ['editar', 'Editar com imagens']] : [['criar', 'Criar']];
 
     return (
         <Criador
             rotulo="Criar imagem"
+            aoAnexar={anexar}
+            rotuloAnexar="Anexar imagem para editar"
+            aoSoltar={soltar}
+            anexos={editar ? [{ envios: refs }] : []}
             topo={
                 <>
-                    <Segmentado rotulo="Modo" valor={modo} aoMudar={setModo} opcoes={[['criar', 'Criar'], ['editar', 'Editar com referências']]} />
+                    <Segmentado rotulo="Modo" valor={modo} aoMudar={(m) => (m === 'editar' ? irParaEdicao() : setModo(m))} opcoes={opcoesModo} />
                     <Campo rotulo="Modelo"><SeletorModelo modelos={MODELOS_IMAGEM} valor={modeloId} aoMudar={trocarModelo} /></Campo>
-                    {editar && <Referencias envios={refs} maximo={modelo.maxRefs} avisar={avisar} />}
+                    {editar && <Referencias envios={refs} rotulo={`Imagens (até ${modelo.maxRefs})`} dica="Use a imagem que quer editar ou referências de rosto, produto e estilo." />}
+                    {!modelo.editar && <span className="-mt-2 text-xs text-cinza">O {modelo.nome} só cria do zero. Para editar uma imagem, toque em + ou escolha outro modelo.</span>}
                 </>
             }
             prompt={{ valor: prompt, aoMudar: setPrompt, placeholder: editar ? 'O que mudar? Ex.: coloque o produto sobre mármore branco' : 'Descreva a imagem que você quer criar', max: 5000 }}
@@ -82,7 +100,7 @@ export default function TelaImagem() {
             }
             resumo={`${modelo.nome} · ${rotuloProporcao(proporcao)} · ${rotuloQualidade}${quantidade > 1 ? ` · ${quantidade}x` : ''}`}
             gerar={{ rotulo: quantidade > 1 ? `Gerar ${quantidade} imagens` : 'Gerar imagem', aoGerar, desativado: !!motivo, motivo }}
-            feed={<Feed itens={meus} vazio="Suas imagens aparecem aqui. Escreva um prompt e toque em Gerar." />}
+            feed={<Feed itens={meus} vazio="Suas imagens aparecem aqui. Escreva um prompt e toque em Gerar, ou toque em + para editar uma foto sua." />}
         />
     );
 }

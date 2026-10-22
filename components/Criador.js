@@ -4,7 +4,7 @@
 // computador = painel à esquerda + feed à direita; celular = feed + barra de criação + gaveta de ajustes.
 import { useEffect, useState } from 'react';
 import Icone from './Icone';
-import { BotaoGerar, CampoPrompt } from './Controles';
+import { BotaoGerar, CampoPrompt, FaixaAnexos } from './Controles';
 
 export function useEhCelular() {
     const [celular, setCelular] = useState(false);
@@ -18,9 +18,46 @@ export function useEhCelular() {
     return celular;
 }
 
-export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, feed }) {
+// Colar (Ctrl+V) e arrastar arquivos para a tela inteira
+function useArquivosDeFora(aoSoltar) {
+    const [arrastando, setArrastando] = useState(false);
+    useEffect(() => {
+        if (!aoSoltar) return;
+        const colar = (e) => {
+            const arquivos = Array.from(e.clipboardData?.files || []);
+            if (arquivos.length) { e.preventDefault(); aoSoltar(arquivos); }
+        };
+        let contador = 0;
+        const entrar = (e) => { if (e.dataTransfer?.types?.includes('Files')) { contador += 1; setArrastando(true); } };
+        const sair = () => { contador = Math.max(0, contador - 1); if (!contador) setArrastando(false); };
+        const sobre = (e) => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); };
+        const soltar = (e) => {
+            if (!e.dataTransfer?.files?.length) return;
+            e.preventDefault();
+            contador = 0;
+            setArrastando(false);
+            aoSoltar(Array.from(e.dataTransfer.files));
+        };
+        document.addEventListener('paste', colar);
+        document.addEventListener('dragenter', entrar);
+        document.addEventListener('dragleave', sair);
+        document.addEventListener('dragover', sobre);
+        document.addEventListener('drop', soltar);
+        return () => {
+            document.removeEventListener('paste', colar);
+            document.removeEventListener('dragenter', entrar);
+            document.removeEventListener('dragleave', sair);
+            document.removeEventListener('dragover', sobre);
+            document.removeEventListener('drop', soltar);
+        };
+    }, [aoSoltar]);
+    return arrastando;
+}
+
+export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, feed, anexos = [], aoAnexar, rotuloAnexar = 'Anexar imagem', aoSoltar }) {
     const celular = useEhCelular();
     const [gaveta, setGaveta] = useState(false);
+    const arrastando = useArquivosDeFora(aoSoltar);
 
     useEffect(() => {
         if (!gaveta) return;
@@ -29,14 +66,25 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, f
         return () => document.removeEventListener('keydown', esc);
     }, [gaveta]);
 
+    const camada = arrastando && (
+        <div className="pointer-events-none fixed inset-0 z-50 flex animate-escurecer items-center justify-center bg-white/85">
+            <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-tinta px-10 py-8 text-sm">
+                <Icone nome="mais" tamanho={26} />
+                Solte para anexar
+            </div>
+        </div>
+    );
+
     if (!celular) {
         return (
             <div className="flex items-start">
+                {camada}
                 <aside aria-label={rotulo} className="rolagem sticky top-[65px] flex h-[calc(100vh-65px)] w-[380px] flex-none flex-col gap-5 overflow-y-auto border-r border-fina p-5 lg:w-[400px]">
                     {topo}
                     {prompt && <CampoPrompt {...prompt} />}
                     {opcoes}
                     <BotaoGerar {...gerar} />
+                    {aoSoltar && <span className="-mt-2 text-center text-xs text-suave">Dica: arraste ou cole (Ctrl+V) uma imagem aqui</span>}
                 </aside>
                 <main className="min-w-0 flex-1 px-5 pb-12 pt-5 lg:px-7">{feed}</main>
             </div>
@@ -47,8 +95,9 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, f
 
     return (
         <>
-            <main className="px-4 pb-[260px] pt-3">{feed}</main>
+            <main className="px-4 pb-[300px] pt-3">{feed}</main>
             <div className="fixed inset-x-3 bottom-[calc(72px+env(safe-area-inset-bottom))] z-20 flex flex-col gap-2 rounded-[20px] border border-[rgba(17,17,17,0.14)] bg-white p-2.5 shadow-[0_8px_24px_rgba(17,17,17,0.08)]">
+                <FaixaAnexos grupos={anexos} />
                 {prompt && (
                     <>
                         <label htmlFor="prompt-celular" className="sr-only">{prompt.rotulo || 'Prompt'}</label>
@@ -56,6 +105,11 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, f
                     </>
                 )}
                 <div className="flex items-center gap-1.5">
+                    {aoAnexar && (
+                        <button type="button" aria-label={rotuloAnexar} onClick={aoAnexar} className="flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-linha">
+                            <Icone nome="mais" />
+                        </button>
+                    )}
                     <button type="button" onClick={() => setGaveta(true)} className="flex h-10 min-w-0 flex-1 items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-xl border border-linha px-2.5 text-xs">
                         <Icone nome="ajustes" tamanho={15} className="flex-none" />
                         <span className="truncate">{resumo}</span>

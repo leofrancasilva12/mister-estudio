@@ -10,7 +10,9 @@ const FILTROS = [
     ['imagem', 'Imagens'],
     ['video', 'Vídeos'],
     ['lipsync', 'Lip Sync'],
+    ['audio', 'Áudios'],
     ['cinema', 'Cinema'],
+    ['ferramenta', 'Ferramentas'],
     ['favoritos', 'Favoritos'],
 ];
 

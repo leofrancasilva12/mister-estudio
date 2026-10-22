@@ -136,88 +136,126 @@ export function CampoPrompt({ valor, aoMudar, placeholder, linhas = 4, max = 500
 }
 
 // Enviar um ou mais arquivos. Cada item: { url, nome, previa, progresso, erro }
-export function useEnvios(maximo = 1) {
-    const [itens, setItens] = useState([]);
-    const adicionar = async (arquivos) => {
-        const vagas = maximo === 1 ? 1 : maximo - itens.filter((i) => !i.erro).length;
-        const lista = Array.from(arquivos).slice(0, Math.max(0, vagas));
-        if (!lista.length) return;
-        const novos = lista.map((f) => ({ chave: `${f.name}-${f.size}-${Math.random()}`, nome: f.name, tipo: f.type, previa: URL.createObjectURL(f), progresso: 0, arquivo: f }));
-        setItens((atual) => (maximo === 1 ? novos : [...atual.filter((i) => !i.erro), ...novos]));
-        for (const n of novos) {
-            try {
-                const url = await enviarArquivo(n.arquivo, (p) => setItens((atual) => atual.map((i) => (i.chave === n.chave ? { ...i, progresso: p } : i))));
-                setItens((atual) => atual.map((i) => (i.chave === n.chave ? { ...i, url, progresso: 100 } : i)));
-            } catch (e) {
-                setItens((atual) => atual.map((i) => (i.chave === n.chave ? { ...i, erro: e.message } : i)));
-            }
-        }
-    };
-    const definirUrl = (url, nome = 'Da biblioteca', tipo = 'image/') => setItens([{ chave: url, nome, tipo, previa: url, url, progresso: 100 }]);
-    const remover = (chave) => setItens((atual) => atual.filter((i) => i.chave !== chave));
-    const limpar = () => setItens([]);
-    const urls = itens.filter((i) => i.url).map((i) => i.url);
-    const enviando = itens.some((i) => !i.url && !i.erro);
-    return { itens, adicionar, remover, limpar, definirUrl, urls, enviando };
-}
-
 const LIMITES_MB = { image: 10, audio: 10, video: 50 };
 
 function validar(arquivos, aceita, avisar) {
     const ok = [];
-    for (const f of arquivos) {
+    for (const f of Array.from(arquivos || [])) {
         const tipo = (f.type || '').split('/')[0];
         const limite = LIMITES_MB[tipo];
-        if (!limite || !aceita.split(',').some((a) => f.type.startsWith(a.replace('*', '')))) { avisar?.(`"${f.name}" não é um tipo aceito aqui.`); continue; }
+        if (!limite || !aceita.split(',').some((a) => f.type.startsWith(a.trim().replace('*', '')))) { avisar?.(`"${f.name || 'Arquivo'}" não é um tipo aceito aqui.`); continue; }
         if (f.size > limite * 1024 * 1024) { avisar?.(`"${f.name}" passa de ${limite} MB.`); continue; }
         ok.push(f);
     }
     return ok;
 }
 
-export function Referencias({ envios, maximo, avisar, rotulo }) {
-    const entrada = useRef(null);
-    const cheios = envios.itens.filter((i) => !i.erro).length >= maximo;
+// Envio de um ou mais arquivos. Cada item: { chave, nome, tipo, previa, url, progresso, erro }
+// escolher() abre a galeria/arquivos; soltar(arquivos) recebe arquivos arrastados ou colados.
+export function useEnvios(maximo = 1, { aceita = 'image/jpeg,image/png,image/webp', avisar } = {}) {
+    const [itens, setItens] = useState([]);
+    const itensRef = useRef(itens);
+    itensRef.current = itens;
+
+    const adicionar = async (arquivos) => {
+        const validos = validar(arquivos, aceita, avisar);
+        const ocupados = itensRef.current.filter((i) => !i.erro).length;
+        const vagas = maximo === 1 ? 1 : maximo - ocupados;
+        if (vagas <= 0 && validos.length) { avisar?.(`Limite de ${maximo} arquivos.`); return; }
+        const lista = validos.slice(0, vagas);
+        if (!lista.length) return;
+        const novos = lista.map((f) => ({ chave: `${f.name}-${f.size}-${Math.random()}`, nome: f.name || 'Arquivo colado', tipo: f.type, previa: URL.createObjectURL(f), progresso: 0, arquivo: f }));
+        setItens((atual) => (maximo === 1 ? novos : [...atual.filter((i) => !i.erro), ...novos]));
+        for (const n of novos) {
+            try {
+                const url = await enviarArquivo(n.arquivo, (pct) => setItens((atual) => atual.map((i) => (i.chave === n.chave ? { ...i, progresso: pct } : i))));
+                setItens((atual) => atual.map((i) => (i.chave === n.chave ? { ...i, url, progresso: 100 } : i)));
+            } catch (e) {
+                setItens((atual) => atual.map((i) => (i.chave === n.chave ? { ...i, erro: e.message } : i)));
+                avisar?.(e.message);
+            }
+        }
+    };
+    const escolher = () => {
+        const entrada = document.createElement('input');
+        entrada.type = 'file';
+        entrada.accept = aceita;
+        entrada.multiple = maximo > 1;
+        entrada.onchange = () => adicionar(entrada.files);
+        entrada.click();
+    };
+    const definirUrl = (url, nome = 'Da biblioteca', tipo = 'image/png') => setItens((atual) => {
+        const item = { chave: url, nome, tipo, previa: url, url, progresso: 100 };
+        return maximo === 1 ? [item] : [...atual.filter((i) => i.url !== url), item].slice(0, maximo);
+    });
+    const remover = (chave) => setItens((atual) => atual.filter((i) => i.chave !== chave));
+    const limpar = () => setItens([]);
+    const urls = itens.filter((i) => i.url).map((i) => i.url);
+    const enviando = itens.some((i) => !i.url && !i.erro);
+    return { itens, adicionar, escolher, soltar: adicionar, remover, limpar, definirUrl, urls, enviando, maximo };
+}
+
+function Miniatura({ item, aoRemover, tamanho = 'h-14 w-14' }) {
+    const tipo = (item.tipo || '').split('/')[0];
     return (
-        <Campo rotulo={rotulo || `Referências (até ${maximo})`}>
+        <div className={`relative flex-none ${tamanho}`}>
+            {tipo === 'video' ? <video src={item.previa} muted playsInline className={`${tamanho} rounded-xl bg-tinta object-cover`} />
+                : tipo === 'audio' ? <span className={`${tamanho} flex items-center justify-center rounded-xl bg-tinta text-white`}><Icone nome="onda" /></span>
+                    // eslint-disable-next-line @next/next/no-img-element
+                    : <img src={item.previa} alt={item.nome} className={`${tamanho} rounded-xl object-cover ${item.url ? '' : 'opacity-40'}`} />}
+            {!item.url && !item.erro && <span className="absolute inset-x-1.5 bottom-1.5 h-0.5 overflow-hidden rounded bg-black/10"><span className="block h-full bg-tinta transition-all" style={{ width: `${item.progresso}%` }} /></span>}
+            {item.erro && <span title={item.erro} className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/80 text-alerta"><Icone nome="aviso" tamanho={16} /></span>}
+            {aoRemover && (
+                <button type="button" aria-label={`Remover ${item.nome}`} onClick={aoRemover} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-tinta text-white">
+                    <Icone nome="x" tamanho={11} largura={2} />
+                </button>
+            )}
+        </div>
+    );
+}
+
+// Faixa de miniaturas compacta (usada na barra do celular)
+export function FaixaAnexos({ grupos }) {
+    const itens = grupos.flatMap((g) => g.envios.itens.map((i) => ({ ...i, envios: g.envios, rotulo: g.rotulo })));
+    if (!itens.length) return null;
+    return (
+        <div className="sem-barra flex gap-3 overflow-x-auto px-1 pb-1 pt-2">
+            {itens.map((i) => (
+                <div key={i.chave} className="flex flex-col items-center gap-1">
+                    <Miniatura item={i} tamanho="h-11 w-11" aoRemover={() => i.envios.remover(i.chave)} />
+                    {i.rotulo && <span className="text-[10px] text-cinza">{i.rotulo}</span>}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+export function Referencias({ envios, rotulo, dica }) {
+    const cheios = envios.itens.filter((i) => !i.erro).length >= envios.maximo;
+    return (
+        <Campo rotulo={rotulo || `Referências (até ${envios.maximo})`}>
             <div className="flex flex-wrap gap-2">
-                {envios.itens.map((i) => (
-                    <div key={i.chave} className="relative h-14 w-14">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={i.previa} alt={i.nome} className={`h-14 w-14 rounded-xl object-cover ${i.url ? '' : 'opacity-40'}`} />
-                        {!i.url && !i.erro && <span className="absolute inset-x-1.5 bottom-1.5 h-0.5 overflow-hidden rounded bg-black/10"><span className="block h-full bg-tinta transition-all" style={{ width: `${i.progresso}%` }} /></span>}
-                        {i.erro && <span title={i.erro} className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/80 text-alerta"><Icone nome="aviso" tamanho={16} /></span>}
-                        <button type="button" aria-label={`Remover ${i.nome}`} onClick={() => envios.remover(i.chave)} className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-tinta text-white">
-                            <Icone nome="x" tamanho={11} largura={2} />
-                        </button>
-                    </div>
-                ))}
+                {envios.itens.map((i) => <Miniatura key={i.chave} item={i} aoRemover={() => envios.remover(i.chave)} />)}
                 {!cheios && (
-                    <button type="button" aria-label="Adicionar referência" onClick={() => entrada.current?.click()} className="flex h-14 w-14 items-center justify-center rounded-xl border border-dashed border-black/30 hover:border-tinta">
+                    <button type="button" aria-label="Adicionar imagem" onClick={envios.escolher} className="flex h-14 w-14 items-center justify-center rounded-xl border border-dashed border-black/30 hover:border-tinta">
                         <Icone nome="mais" />
                     </button>
                 )}
-                <input ref={entrada} type="file" accept="image/jpeg,image/png,image/webp" multiple={maximo > 1} hidden onChange={(e) => { envios.adicionar(validar(e.target.files, 'image/', avisar)); e.target.value = ''; }} />
             </div>
+            {dica && <span className="text-xs leading-relaxed text-cinza">{dica}</span>}
         </Campo>
     );
 }
 
 // Um arquivo só (quadro inicial, retrato, áudio, vídeo)
-export function SlotArquivo({ envios, aceita, rotulo, vazio, avisar, proporcao = '16 / 10' }) {
-    const entrada = useRef(null);
+export function SlotArquivo({ envios, rotulo, vazio, proporcao = '16 / 10', opcional = false }) {
     const item = envios.itens[0];
     const tipo = (item?.tipo || '').split('/')[0];
     return (
         <Campo rotulo={rotulo}>
             {item ? (
                 <div className="relative flex items-center gap-3 rounded-2xl border border-linha p-2">
-                    {tipo === 'image' && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.previa} alt="" className="h-14 w-14 flex-none rounded-[10px] object-cover" />
-                    )}
-                    {tipo === 'video' && <video src={item.previa} muted playsInline className="h-14 w-14 flex-none rounded-[10px] bg-tinta object-cover" />}
-                    {tipo === 'audio' && <span className="flex h-14 w-14 flex-none items-center justify-center rounded-[10px] bg-tinta text-white"><Icone nome="onda" /></span>}
+                    <Miniatura item={item} />
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                         <span className="truncate text-sm">{item.nome}</span>
                         {item.erro ? <span className="text-xs text-alerta">{item.erro}</span> : item.url ? <span className="text-xs text-cinza">Pronto para usar</span> : (
@@ -225,15 +263,17 @@ export function SlotArquivo({ envios, aceita, rotulo, vazio, avisar, proporcao =
                         )}
                         {tipo === 'audio' && item.url && <audio src={item.previa} controls className="h-8 w-full" />}
                     </span>
-                    <button type="button" onClick={() => entrada.current?.click()} className="h-10 flex-none rounded-[10px] border border-linha px-3 text-[13px]">Trocar</button>
+                    <span className="flex flex-none flex-col gap-1">
+                        <button type="button" onClick={envios.escolher} className="h-9 rounded-[10px] border border-linha px-3 text-[13px]">Trocar</button>
+                        {opcional && <button type="button" onClick={envios.limpar} className="h-9 rounded-[10px] px-3 text-[13px] text-cinza">Tirar</button>}
+                    </span>
                 </div>
             ) : (
-                <button type="button" onClick={() => entrada.current?.click()} className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-black/30 text-[13px] text-cinza transition-colors hover:border-tinta hover:text-tinta" style={{ aspectRatio: proporcao }}>
+                <button type="button" onClick={envios.escolher} className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-black/30 text-[13px] text-cinza transition-colors hover:border-tinta hover:text-tinta" style={{ aspectRatio: proporcao }}>
                     <Icone nome="mais" />
                     {vazio}
                 </button>
             )}
-            <input ref={entrada} type="file" accept={aceita} hidden onChange={(e) => { envios.adicionar(validar(e.target.files, aceita, avisar)); e.target.value = ''; }} />
         </Campo>
     );
 }

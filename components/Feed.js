@@ -7,7 +7,7 @@ import Visualizador from './Visualizador';
 import { useHistorico, expiraEmBreve } from '@/lib/historico';
 import { razaoCss } from '@/lib/modelos';
 
-const razao = (item) => (item.proporcao && item.proporcao.includes(':') ? razaoCss(item.proporcao) : item.midia === 'video' ? '16 / 10' : '1 / 1');
+const razao = (item) => (item.midia === 'audio' ? '5 / 2' : item.proporcao && item.proporcao.includes(':') ? razaoCss(item.proporcao) : item.midia === 'video' ? '16 / 10' : '1 / 1');
 
 function CartaoAndamento({ item }) {
     return (
@@ -37,7 +37,22 @@ function CartaoFalha({ item }) {
     );
 }
 
+function CartaoAudio({ item, abrir }) {
+    return (
+        <div className="flex flex-col gap-3 rounded-2xl border border-linha p-3.5">
+            <span className="flex items-center gap-2 text-xs text-cinza"><Icone nome="onda" tamanho={16} />{item.detalhes}</span>
+            <p className="line-clamp-3 text-[13px] leading-relaxed">{item.prompt}</p>
+            <audio src={item.url} controls preload="none" className="h-9 w-full" />
+            <span className="flex gap-1.5">
+                <a href={`/lipsync?${new URLSearchParams({ audio: item.url })}`} className="flex h-10 flex-1 items-center justify-center rounded-xl bg-tinta text-[13px] text-white">Usar no Lip Sync</a>
+                <button type="button" aria-label="Mais opções" onClick={abrir} className="flex h-10 w-10 items-center justify-center rounded-xl border border-linha"><Icone nome="pontos" tamanho={16} /></button>
+            </span>
+        </div>
+    );
+}
+
 function CartaoPronto({ item, abrir }) {
+    if (item.midia === 'audio') return <CartaoAudio item={item} abrir={abrir} />;
     return (
         <button type="button" onClick={abrir} aria-label={`Abrir: ${item.titulo || item.prompt || 'resultado'}`} className="group relative block w-full overflow-hidden rounded-2xl bg-pedra text-left">
             {item.midia === 'video' ? (

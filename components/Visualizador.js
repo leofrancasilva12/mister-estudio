@@ -7,7 +7,7 @@ import Icone from './Icone';
 import { baixar } from '@/lib/api';
 import { useHistorico, dataExpiracao } from '@/lib/historico';
 
-const PAGINA = { imagem: '/imagem', video: '/video', lipsync: '/lipsync', cinema: '/cinema' };
+const PAGINA = { imagem: '/imagem', video: '/video', lipsync: '/lipsync', cinema: '/cinema', audio: '/audio', ferramenta: '/ferramentas' };
 
 function Atalho({ href, icone, children, aoClicar }) {
     const router = useRouter();
@@ -39,8 +39,9 @@ export default function Visualizador({ itens, id, aoMudar, aoFechar }) {
     useEffect(() => setConfirmar(false), [id]);
 
     if (!item) return null;
-    const ehImagem = item.midia !== 'video';
-    const ext = ehImagem ? (item.url.split('?')[0].match(/\.(png|jpe?g|webp)$/i)?.[1] || 'png') : 'mp4';
+    const ehImagem = item.midia === 'imagem';
+    const ehAudio = item.midia === 'audio';
+    const ext = ehAudio ? 'mp3' : ehImagem ? (item.url.split('?')[0].match(/\.(png|jpe?g|webp)$/i)?.[1] || 'png') : 'mp4';
     const nomeArquivo = `estudio-${item.tipo}-${new Date(item.criadoEm).toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${ext}`;
     const expira = dataExpiracao(item);
     const q = (o) => new URLSearchParams(o).toString();
@@ -60,7 +61,12 @@ export default function Visualizador({ itens, id, aoMudar, aoFechar }) {
             </header>
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
                 <section aria-label="Mídia" className="flex flex-none items-center justify-center bg-fundo p-4 md:min-h-0 md:flex-1 md:p-10">
-                    {ehImagem ? (
+                    {ehAudio ? (
+                        <div className="flex w-full max-w-lg animate-entrar flex-col items-center gap-6 rounded-3xl bg-white p-8">
+                            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-tinta text-white"><Icone nome="onda" tamanho={26} /></span>
+                            <audio key={item.id} src={item.url} controls autoPlay className="w-full" />
+                        </div>
+                    ) : ehImagem ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img key={item.id} src={item.url} alt={item.prompt || ''} className="max-h-[60vh] max-w-full animate-entrar rounded-2xl object-contain md:max-h-full" />
                     ) : (
@@ -87,10 +93,16 @@ export default function Visualizador({ itens, id, aoMudar, aoFechar }) {
                     <div className="flex flex-col gap-2">
                         <span className="text-xs text-cinza">Continuar a partir daqui</span>
                         <div className="grid grid-cols-2 gap-2">
-                            <Atalho icone="refazer" href={`${PAGINA[item.tipo] || '/imagem'}?${q({ prompt: item.promptOriginal || item.prompt || '' })}`}>Reusar prompt</Atalho>
+                            {item.tipo === 'audio'
+                                ? <Atalho icone="refazer" href={`/audio?${q({ texto: item.prompt || '' })}`}>Reusar texto</Atalho>
+                                : item.prompt ? <Atalho icone="refazer" href={`${PAGINA[item.tipo] || '/imagem'}?${q({ prompt: item.promptOriginal || item.prompt || '' })}`}>Reusar prompt</Atalho> : null}
+                            {ehAudio && <Atalho icone="rosto" href={`/lipsync?${q({ audio: item.url })}`}>Usar no Lip Sync</Atalho>}
                             {ehImagem && <Atalho icone="video" href={`/video?${q({ imagem: item.url })}`}>Animar</Atalho>}
                             {ehImagem && <Atalho icone="rosto" href={`/lipsync?${q({ imagem: item.url })}`}>Fazer falar</Atalho>}
                             {ehImagem && <Atalho icone="editar" href={`/imagem?${q({ ref: item.url })}`}>Editar</Atalho>}
+                            {ehImagem && <Atalho icone="ampliar" href={`/ferramentas?${q({ ferramenta: 'topaz-imagem', imagem: item.url })}`}>Ampliar</Atalho>}
+                            {ehImagem && <Atalho icone="faisca" href={`/ferramentas?${q({ ferramenta: 'recraft-fundo', imagem: item.url })}`}>Tirar fundo</Atalho>}
+                            {item.midia === 'video' && <Atalho icone="ampliar" href={`/ferramentas?${q({ ferramenta: 'topaz-video', video: item.url })}`}>Ampliar vídeo</Atalho>}
                         </div>
                     </div>
                     <div className="flex-1" />

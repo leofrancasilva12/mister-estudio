@@ -24,6 +24,16 @@ O navegador só conversa com o nosso servidor. A chave do Kie.ai nunca sai da VP
 
 Visual: branco, traços finos, fonte Geist. No computador, painel de criação à esquerda e feed à direita; no celular, feed em tela cheia, barra de criação embaixo e ajustes numa gaveta.
 
+## O que dá para fazer
+
+- **Imagem:** Nano Banana Pro, Nano Banana 2, Seedream 5.0 Pro, GPT Image 2, Ideogram V3, Seedream 4.5 e Flux 2 Pro. Criar do zero ou editar com até 16 imagens anexadas.
+- **Vídeo:** Kling 3.0, Veo 3.1, Seedance 2.5, Seedance 2, Wan 3.0 e Hailuo 2.3. A partir de texto, de quadro inicial e final, ou de várias imagens de referência.
+- **Lip Sync:** Kling Avatar, InfiniteTalk e troca de fala em vídeo.
+- **Áudio:** voz em português com ElevenLabs Multilingual v2.
+- **Cinema:** presets de câmera, lente, distância focal e abertura.
+- **Ferramentas:** ampliar imagem (Topaz), ampliar com nitidez (Recraft), remover fundo (Recraft) e ampliar vídeo (Topaz).
+- No celular, o botão **+** da barra anexa fotos; no computador, dá para arrastar ou colar (Ctrl+V).
+
 ## Subir na VPS, passo a passo
 
 Os comandos abaixo rodam na VPS, logado como `leo` no Termius.

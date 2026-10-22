@@ -4,18 +4,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Icone from '@/components/Icone';
+import Visualizador from '@/components/Visualizador';
 import { useHistorico } from '@/lib/historico';
-import { razaoCss } from '@/lib/modelos';
 
 const q = (o) => new URLSearchParams(o).toString();
 
 const DESTAQUES = [
-    { nome: 'Nano Banana 2', marca: 'Google · imagem', href: '/imagem', escuro: false, tom: '#efefec' },
-    { nome: 'Seedream 4.5', marca: 'ByteDance · imagem', href: '/imagem', escuro: false, tom: '#e7e7e3' },
-    { nome: 'GPT Image 1.5', marca: 'OpenAI · imagem', href: '/imagem', escuro: false, tom: '#f2f1ee' },
-    { nome: 'Seedance 2', marca: 'ByteDance · vídeo com áudio', href: '/video', escuro: true, tom: '#111111' },
-    { nome: 'Kling 2.6', marca: 'Kuaishou · vídeo', href: '/video', escuro: true, tom: '#262626' },
-    { nome: 'Hailuo 2.3', marca: 'MiniMax · imagem para vídeo', href: '/video', escuro: true, tom: '#3a3a3a' },
+    { nome: 'Nano Banana Pro', marca: 'Google · imagem', href: '/imagem', escuro: false, tom: '#efefec' },
+    { nome: 'Seedream 5.0 Pro', marca: 'ByteDance · imagem', href: '/imagem', escuro: false, tom: '#e7e7e3' },
+    { nome: 'GPT Image 2', marca: 'OpenAI · imagem', href: '/imagem', escuro: false, tom: '#f2f1ee' },
+    { nome: 'Kling 3.0', marca: 'Kuaishou · vídeo', href: '/video', escuro: true, tom: '#111111' },
+    { nome: 'Veo 3.1', marca: 'Google · vídeo com som', href: '/video', escuro: true, tom: '#262626' },
+    { nome: 'Seedance 2.5', marca: 'ByteDance · até 30 s', href: '/video', escuro: true, tom: '#3a3a3a' },
 ];
 
 const PRESETS = [
@@ -25,6 +25,9 @@ const PRESETS = [
     { nome: 'Câmera orbital', texto: 'Gira em volta do produto', icone: 'orbita', href: `/video?${q({ prompt: 'A câmera gira devagar em volta de [seu produto] sobre uma mesa clara, reflexos suaves' })}` },
     { nome: 'Cena de cinema', texto: 'Câmera, lente e abertura reais', icone: 'camera', href: '/cinema' },
     { nome: 'Animar uma foto', texto: 'Dê movimento a uma imagem', icone: 'video', href: `/video?${q({ modo: 'imagem' })}` },
+    { nome: 'Voz em português', texto: 'Texto vira fala natural', icone: 'som', href: '/audio' },
+    { nome: 'Remover fundo', texto: 'Recorte limpo em um toque', icone: 'faisca', href: `/ferramentas?${q({ ferramenta: 'recraft-fundo' })}` },
+    { nome: 'Ampliar para 4K', texto: 'Mais nitidez em imagem e vídeo', icone: 'ampliar', href: '/ferramentas' },
 ];
 
 export default function Explorar() {
@@ -32,7 +35,9 @@ export default function Explorar() {
     const { itens } = useHistorico();
     const [tipo, setTipo] = useState('imagem');
     const [texto, setTexto] = useState('');
-    const recentes = itens.filter((i) => i.estado === 'pronto').slice(0, 6);
+    const prontos = itens.filter((i) => i.estado === 'pronto' && i.midia !== 'audio');
+    const recentes = prontos.slice(0, 6);
+    const [aberto, setAberto] = useState(null);
 
     const enviar = (e) => {
         e.preventDefault();
@@ -92,16 +97,17 @@ export default function Explorar() {
                     </div>
                     <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
                         {recentes.map((i) => (
-                            <Link key={i.id} href="/biblioteca" aria-label={`Abrir na biblioteca: ${i.prompt || i.titulo}`} className="overflow-hidden rounded-2xl bg-pedra" style={{ aspectRatio: '4 / 5' }}>
+                            <button key={i.id} type="button" onClick={() => setAberto(i.id)} aria-label={`Abrir: ${i.prompt || i.titulo}`} className="overflow-hidden rounded-2xl bg-pedra" style={{ aspectRatio: '4 / 5' }}>
                                 {i.midia === 'video'
                                     ? <video src={i.url} muted playsInline preload="metadata" className="h-full w-full bg-tinta object-cover" />
                                     // eslint-disable-next-line @next/next/no-img-element
-                                    : <img src={i.url} alt="" loading="lazy" className="h-full w-full object-cover" style={{ aspectRatio: razaoCss(i.proporcao) }} />}
-                            </Link>
+                                    : <img src={i.url} alt="" loading="lazy" className="h-full w-full object-cover" />}
+                            </button>
                         ))}
                     </div>
                 </section>
             )}
+            {aberto && <Visualizador itens={prontos} id={aberto} aoMudar={setAberto} aoFechar={() => setAberto(null)} />}
         </main>
     );
 }

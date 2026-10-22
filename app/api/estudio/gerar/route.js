@@ -5,7 +5,7 @@ import { criarTarefa, ErroKie } from '@/lib/kie/cliente';
 
 export const dynamic = 'force-dynamic';
 
-const TIPOS = ['imagem', 'edicao', 'video', 'imagem-video', 'lipsync'];
+const TIPOS = ['imagem', 'edicao', 'video', 'imagem-video', 'lipsync', 'audio', 'ferramenta'];
 
 export async function POST(req) {
     try {

@@ -13,7 +13,9 @@ export const SECOES = [
     { href: '/imagem', nome: 'Imagem', icone: 'imagem' },
     { href: '/video', nome: 'Vídeo', icone: 'video' },
     { href: '/lipsync', nome: 'Lip Sync', icone: 'rosto' },
+    { href: '/audio', nome: 'Áudio', icone: 'som' },
     { href: '/cinema', nome: 'Cinema', icone: 'camera' },
+    { href: '/ferramentas', nome: 'Ferramentas', icone: 'ampliar' },
     { href: '/biblioteca', nome: 'Biblioteca', icone: 'grade' },
 ];
 
@@ -72,7 +74,7 @@ export function NavInferior() {
     const [mais, setMais] = useState(false);
     useEffect(() => setMais(false), [caminho]);
     const principais = [SECOES[0], SECOES[1], SECOES[2]];
-    const extras = [SECOES[3], SECOES[4]];
+    const extras = [SECOES[3], SECOES[4], SECOES[5], SECOES[6]];
     const maisAtivo = extras.some((s) => ativa(caminho, s.href));
     const item = (s) => {
         const atual = ativa(caminho, s.href);
@@ -107,7 +109,7 @@ export function NavInferior() {
                     <Icone nome="pontos" tamanho={22} />
                     Mais
                 </button>
-                {item(SECOES[5])}
+                {item(SECOES[7])}
             </nav>
         </>
     );
