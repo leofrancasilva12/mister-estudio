@@ -18,8 +18,11 @@ if (!TOKEN && !local) {
   process.exit(1);
 }
 
+// A chave pode vir no cabeçalho Authorization ou no fim do endereço (/pesquisa/mcp/CHAVE),
+// que é o jeito mais simples de conectar no Claude.
 function exigirToken(req: Request, res: Response, next: NextFunction) {
-  const recebido = (req.header("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const doCabecalho = (req.header("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const recebido = doCabecalho || String(req.params?.chave ?? "");
   const a = Buffer.from(recebido);
   const b = Buffer.from(TOKEN);
   if (a.length !== b.length || !timingSafeEqual(a, b)) {
@@ -40,7 +43,7 @@ app.get(["/saude", "/pesquisa/saude"], (_req, res) => {
 
 const protecao = TOKEN ? [exigirToken] : [];
 
-app.post("/pesquisa/mcp", ...protecao, async (req: Request, res: Response) => {
+app.post(["/pesquisa/mcp", "/pesquisa/mcp/:chave"], ...protecao, async (req: Request, res: Response) => {
   const server = new McpServer({ name: "pesquisa", version: "1.0.0" });
   registrarFerramentas(server);
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
@@ -60,7 +63,7 @@ app.post("/pesquisa/mcp", ...protecao, async (req: Request, res: Response) => {
 const naoPermitido = (_req: Request, res: Response) => {
   res.status(405).json({ jsonrpc: "2.0", error: { code: -32000, message: "Método não permitido" }, id: null });
 };
-app.get("/pesquisa/mcp", ...protecao, naoPermitido);
-app.delete("/pesquisa/mcp", ...protecao, naoPermitido);
+app.get(["/pesquisa/mcp", "/pesquisa/mcp/:chave"], ...protecao, naoPermitido);
+app.delete(["/pesquisa/mcp", "/pesquisa/mcp/:chave"], ...protecao, naoPermitido);
 
 app.listen(PORTA, HOST, () => console.log(`Mister Pesquisa MCP em http://${HOST}:${PORTA}/pesquisa/mcp`));
