@@ -2,7 +2,7 @@
 
 Servidor MCP do Estúdio: deixa o Claude (e qualquer agente com MCP) **gerar imagens e vídeos com IA** e guardar tudo numa galeria.
 
-> **Etapa 2 de 3.** Gera de verdade pelo **Kie.ai** (Nano Banana Pro, Nano Banana 2, GPT Image 2, Kling 3.0 e Veo 3.1 Rápido). A imagem aparece direto no chat. Há um teto diário de créditos (`MCP_LIMITE_CREDITOS_DIA`, padrão 600).
+> **Etapa 2 de 3.** Gera de verdade pelo **Kie.ai** (Nano Banana Pro, Nano Banana 2, GPT Image 2, Kling 3.0, Veo 3.1 Rápido, vozes e diálogos ElevenLabs e Kling Avatar para fazer falar). A imagem aparece direto no chat. Há um teto diário de créditos (`MCP_LIMITE_CREDITOS_DIA`, padrão 600).
 > **Etapa 3:** gravar a galeria no **Supabase**, compartilhada com o app.
 
 ---

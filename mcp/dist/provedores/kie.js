@@ -13,6 +13,20 @@ const MENSAGENS = {
 };
 export const MODELOS_IMAGEM = ["nano-banana-pro", "nano-banana-2", "gpt-image-2"];
 export const MODELOS_VIDEO = ["kling-3", "veo-3-1-rapido"];
+// As 12 vozes do ElevenLabs que o site também usa
+export const VOZES = {
+    Laura: "FGY2WhTYpPnrIDTdsKH5", "Ana Rita": "wJqPPQ618aTW29mptyoc", Bella: "hpp4J3VqNfWAUOO0d1Us", Emma: "pPdl9cQBQq4p6mRkZy2Z",
+    Lucy: "lcMyyd2HUfFzxdCaC4Ta", Aria: "TC0Zp7WVFzhA8zpTlRqV", Liam: "TX3LPaxmHKxFdv7VOQHJ", Brian: "nPczCjzI2devNBz1zQrb",
+    Callum: "N2lVS1w4EtoT3dr4eOWO", Finn: "vBKc2FfBKJfcZNyEt1n6", Benjamin: "LruHrtVF6PSyGItzMNHS", James: "EkK5I93UQWFDigLMpZcX",
+};
+export const NOMES_VOZES = Object.keys(VOZES);
+const idVoz = (nome) => {
+    const achada = Object.keys(VOZES).find((n) => n.toLowerCase() === String(nome ?? "").trim().toLowerCase());
+    if (!achada)
+        throw new Error(`Voz "${nome}" não existe. Use uma destas: ${NOMES_VOZES.join(", ")}.`);
+    return VOZES[achada];
+};
+const letras = (p) => (p.falas?.length ? p.falas.reduce((n, f) => n + f.texto.length, 0) : p.prompt.length);
 // Estimativa em créditos (o valor real vem do Kie.ai depois)
 export function estimarCreditos(p) {
     const q = p.qualidade ?? "1K";
@@ -23,6 +37,10 @@ export function estimarCreditos(p) {
             return { "1K": 6, "2K": 10, "4K": 16 }[q] ?? 6;
         return q === "4K" ? 24 : 18;
     }
+    if (p.tipo === "audio")
+        return Math.max(1, Math.ceil((letras(p) / 1000) * 12));
+    if (p.tipo === "falante")
+        return (p.modelo === "kling-avatar-pro" ? 16 : 8) * (p.duracaoSegundos ?? 15);
     if (p.modelo === "veo-3-1-rapido")
         return 60;
     return 14 * (p.duracaoSegundos ?? 5);
@@ -74,6 +92,30 @@ function montar(p) {
         if (refs.length)
             input.image_input = refs.slice(0, 8);
         return { model: "nano-banana-pro", input };
+    }
+    if (p.tipo === "audio") {
+        if (p.falas?.length) {
+            const dialogue = p.falas.map((f) => ({ text: f.texto.trim(), voice: idVoz(f.voz) })).filter((f) => f.text);
+            if (letras(p) > 5000)
+                throw new Error("O diálogo passou de 5000 letras.");
+            return { model: "elevenlabs/text-to-dialogue-v3", input: { dialogue, stability: 0.5, language_code: "pt" } };
+        }
+        if (p.prompt.length > 5000)
+            throw new Error("O texto passou de 5000 letras.");
+        return {
+            model: "elevenlabs/text-to-speech-multilingual-v2",
+            input: { text: p.prompt, voice: idVoz(p.voz ?? "Laura"), stability: 0.5, similarity_boost: 0.75, style: 0, speed: Math.min(1.2, Math.max(0.7, p.velocidade ?? 1)) },
+        };
+    }
+    if (p.tipo === "falante") {
+        if (!p.imagemInicial || !/^https:\/\//.test(p.imagemInicial))
+            throw new Error("Falta o link https do retrato.");
+        if (!p.audioUrl || !/^https:\/\//.test(p.audioUrl))
+            throw new Error("Falta o link https do áudio.");
+        return {
+            model: p.modelo === "kling-avatar-pro" ? "kling/ai-avatar-pro" : "kling/ai-avatar-standard",
+            input: { image_url: p.imagemInicial, audio_url: p.audioUrl, prompt: p.prompt || "Uma pessoa falando de forma natural e calorosa para a câmera" },
+        };
     }
     const formato = p.formato === "4:5" ? "9:16" : p.formato;
     const inicial = p.imagemInicial && /^https:\/\//.test(p.imagemInicial) ? p.imagemInicial : undefined;

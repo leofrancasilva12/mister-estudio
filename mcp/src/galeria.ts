@@ -7,7 +7,7 @@ import type { Tarefa } from "./provedores/tipos.js";
 
 export interface ItemGaleria {
   id: string;
-  tipo: "imagem" | "video";
+  tipo: "imagem" | "video" | "audio" | "falante";
   prompt: string;
   formato: string;
   url: string;
@@ -48,7 +48,7 @@ export function salvarNaGaleria(tarefa: Tarefa): ItemGaleria | undefined {
   return item;
 }
 
-export function listarGaleria(limite: number, tipo?: "imagem" | "video"): ItemGaleria[] {
+export function listarGaleria(limite: number, tipo?: ItemGaleria["tipo"]): ItemGaleria[] {
   return itens.filter((i) => !tipo || i.tipo === tipo).slice(0, limite);
 }
 

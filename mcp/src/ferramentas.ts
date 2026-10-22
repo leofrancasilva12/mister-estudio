@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { buscarPersonagem, listarGaleria, listarPersonagens, salvarNaGaleria } from "./galeria.js";
 import type { PedidoGeracao, Provedor, Tarefa } from "./provedores/tipos.js";
-import { consultarSaldo, estimarCreditos } from "./provedores/kie.js";
+import { consultarSaldo, estimarCreditos, NOMES_VOZES } from "./provedores/kie.js";
 import { config } from "./config.js";
 import sharp from "sharp";
 
@@ -61,8 +61,8 @@ function registrarGasto(t: Tarefa) {
 }
 
 function descreverTarefa(t: Tarefa): string {
-  const ehVideo = t.pedido.tipo === "video";
-  const tipo = ehVideo ? "Vídeo" : "Imagem";
+  const ehVideo = t.pedido.tipo !== "imagem";
+  const tipo = { imagem: "Imagem", video: "Vídeo", audio: "Áudio", falante: "Vídeo falado" }[t.pedido.tipo];
   switch (t.situacao) {
     case "pronta":
       return `${tipo} ${ehVideo ? "pronto" : "pronta"}.\nLink: ${t.resultadoUrl}\nFormato: ${t.pedido.formato}${t.modeloKie ? `\nModelo: ${t.modeloKie}` : ""}${t.creditos ? `\nCusto: ${t.creditos} créditos` : ""}\nTarefa: ${t.id}\nO link do Kie.ai vale por cerca de 14 dias: baixe o que quiser guardar.`;
@@ -197,7 +197,7 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       description: "Lista as imagens e vídeos já gerados no Estúdio, do mais recente para o mais antigo.",
       inputSchema: {
         limite: z.number().int().min(1).max(50).default(10),
-        tipo: z.enum(["imagem", "video"]).optional(),
+        tipo: z.enum(["imagem", "video", "audio", "falante"]).optional(),
       },
       annotations: { readOnlyHint: true },
     },
@@ -205,7 +205,7 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       const itens = listarGaleria(limite, tipo);
       if (itens.length === 0) return texto("A galeria ainda está vazia.");
       const linhas = itens.map(
-        (i, n) => `${n + 1}. ${i.tipo === "video" ? "Vídeo" : "Imagem"} ${i.formato}: ${i.prompt.slice(0, 80)}\n   ${i.url}`
+        (i, n) => `${n + 1}. ${({ imagem: "Imagem", video: "Vídeo", audio: "Áudio", falante: "Vídeo falado" } as Record<string, string>)[i.tipo]} ${i.formato}: ${i.prompt.slice(0, 80)}\n   ${i.url}`
       );
       return texto(linhas.join("\n"));
     }
@@ -243,6 +243,102 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       } catch (e) {
         return texto(`Não consegui ler o saldo: ${(e as Error).message}`);
       }
+    }
+  );
+
+  // Espera um pouco (áudios saem em segundos) e devolve a tarefa como estiver.
+  async function iniciarEsperando(pedido: PedidoGeracao, ms: number): Promise<Tarefa | string> {
+    const teto = conferirTeto(estimarCreditos(pedido));
+    if (teto) return teto;
+    let tarefa: Tarefa;
+    try { tarefa = await provedor.iniciar(pedido); } catch (e) { return `Não consegui gerar: ${(e as Error).message}`; }
+    reservar(tarefa);
+    const limite = Date.now() + ms;
+    while (Date.now() < limite) {
+      await esperar(1_500);
+      tarefa = (await provedor.consultar(tarefa.id).catch(() => tarefa)) ?? tarefa;
+      if (tarefa.situacao === "pronta" || tarefa.situacao === "falhou") break;
+    }
+    if (tarefa.situacao === "pronta") salvarNaGaleria(tarefa);
+    registrarGasto(tarefa);
+    return tarefa;
+  }
+  const comoTexto = (t: Tarefa | string) => texto(typeof t === "string" ? t : descreverTarefa(t));
+  const listaVozes = "Femininas: Laura, Ana Rita, Bella, Emma, Lucy, Aria. Masculinas: Liam, Brian, Callum, Finn, Benjamin, James.";
+
+  server.registerTool(
+    "gerar_voz",
+    {
+      title: "Gerar voz",
+      description:
+        "Transforma um texto em fala (narração) com as vozes do ElevenLabs, em português. " + listaVozes +
+        " Custa cerca de 12 créditos a cada 1000 letras. Devolve o link do áudio (MP3), que também serve para fazer_falar.",
+      inputSchema: {
+        texto: z.string().min(2).max(5000).describe("O que a voz vai falar"),
+        voz: z.enum(NOMES_VOZES).default("Laura").describe("Nome da voz"),
+        velocidade: z.number().min(0.7).max(1.2).default(1).describe("1 = normal"),
+      },
+      annotations: { openWorldHint: true },
+    },
+    async ({ texto: fala, voz, velocidade }) =>
+      comoTexto(await iniciarEsperando({ tipo: "audio", prompt: fala, formato: "1:1", voz, velocidade }, 40_000))
+  );
+
+  server.registerTool(
+    "gerar_dialogo",
+    {
+      title: "Gerar diálogo",
+      description:
+        "Gera uma conversa entre vozes diferentes (ElevenLabs V3), fala por fala, em português. " + listaVozes +
+        " Custa cerca de 12 créditos a cada 1000 letras. Devolve o link do áudio.",
+      inputSchema: {
+        falas: z.array(z.object({ voz: z.enum(NOMES_VOZES), texto: z.string().min(1) })).min(1).max(40).describe("As falas, na ordem"),
+      },
+      annotations: { openWorldHint: true },
+    },
+    async ({ falas }) =>
+      comoTexto(await iniciarEsperando({ tipo: "audio", prompt: falas.map((f) => `${f.voz}: ${f.texto}`).join(" / "), formato: "1:1", falas }, 60_000))
+  );
+
+  server.registerTool(
+    "fazer_falar",
+    {
+      title: "Fazer falar",
+      description:
+        "Faz a pessoa de uma foto falar (lip sync com Kling Avatar). Mande o link do retrato e OU o link de um áudio pronto OU um texto com a voz " +
+        "(aí a voz é gerada antes). Custa 8 créditos por segundo de fala (16 na versão pro). Demora alguns minutos: devolve o id da tarefa; " +
+        "use consultar_tarefa depois.",
+      inputSchema: {
+        retrato: z.string().url().describe("Link https da foto (rosto de frente, bem iluminado)"),
+        audio: z.string().url().optional().describe("Link https de um áudio já pronto (ex.: de gerar_voz)"),
+        texto: z.string().min(2).max(1500).optional().describe("Texto da fala, se não tiver áudio"),
+        voz: z.enum(NOMES_VOZES).default("Laura").describe("Voz usada quando mandar texto"),
+        qualidade: z.enum(["padrao", "pro"]).default("padrao"),
+        prompt: z.string().optional().describe("Como a pessoa se comporta (ex.: sorrindo, gesticulando pouco)"),
+      },
+      annotations: { openWorldHint: true },
+    },
+    async ({ retrato, audio, texto: fala, voz, qualidade, prompt }) => {
+      let audioUrl = audio;
+      let antes = "";
+      // Duração estimada da fala: cerca de 15 letras por segundo
+      const segundos = fala ? Math.max(3, Math.ceil(fala.length / 15)) : 15;
+      const modelo = qualidade === "pro" ? "kling-avatar-pro" : "kling-avatar";
+      if (!audioUrl) {
+        if (!fala) return texto("Mande o link de um áudio ou o texto da fala.");
+        const teto = conferirTeto(estimarCreditos({ tipo: "falante", prompt: "", formato: "1:1", modelo, duracaoSegundos: segundos }) + 1);
+        if (teto) return texto(teto);
+        const v = await iniciarEsperando({ tipo: "audio", prompt: fala, formato: "1:1", voz }, 45_000);
+        if (typeof v === "string") return texto(v);
+        if (v.situacao !== "pronta" || !v.resultadoUrl) return texto(`A voz ainda não ficou pronta (tarefa ${v.id}). Tente fazer_falar de novo com o link do áudio quando ela terminar.`);
+        audioUrl = v.resultadoUrl;
+        antes = `Voz gerada (${voz}): ${audioUrl}\n\n`;
+      }
+      const t = await iniciarEsperando(
+        { tipo: "falante", prompt: prompt ?? "", formato: "1:1", modelo, imagemInicial: retrato, audioUrl, duracaoSegundos: segundos },
+        0
+      );
+      return texto(antes + (typeof t === "string" ? t : descreverTarefa(t)));
     }
   );
 }
