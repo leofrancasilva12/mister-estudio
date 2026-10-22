@@ -11,7 +11,9 @@ const CHAVE_ABERTURA = 'mister-estudio:abertura'; // a mesma de components/Marca
 export const metadata = {
     title: 'Mister Studio',
     description: 'Imagens, vídeos e avatares falantes com IA, pelo Kie.ai.',
-    icons: { icon: '/icone.svg', apple: '/icone-180.png' },
+    icons: { icon: [{ url: '/icone.svg', type: 'image/svg+xml' }, { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' }], apple: '/icone-180.png' },
+    appleWebApp: { capable: true, title: 'Mister Studio', statusBarStyle: 'default' },
+    applicationName: 'Mister Studio',
 };
 
 export const viewport = { themeColor: '#ffffff', width: 'device-width', initialScale: 1, viewportFit: 'cover' };

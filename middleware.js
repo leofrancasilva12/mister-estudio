@@ -23,5 +23,6 @@ export async function middleware(req) {
 }
 
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|icone.svg|favicon.ico).*)'],
+    // Ícones e manifesto ficam livres: o celular busca sem estar logado ao instalar
+    matcher: ['/((?!_next/static|_next/image|icone|favicon|manifest.webmanifest).*)'],
 };
