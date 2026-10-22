@@ -1,0 +1,43 @@
+# Só o MCP (conector do Claude) + HTTPS, sem o site.
+# Ligar:    docker compose down && docker compose -f docker-compose.mcp.yml up -d --build
+# Voltar ao site completo: docker compose -f docker-compose.mcp.yml down && docker compose up -d
+# Usa o mesmo .env e os mesmos volumes (personagens e certificado HTTPS continuam).
+
+services:
+  estudio-mcp:
+    build: ./mcp
+    restart: unless-stopped
+    environment:
+      MODO: http
+      HOST: 0.0.0.0
+      PORTA: 3333
+      MCP_TOKEN: ${MCP_TOKEN}
+      HOSTS_PERMITIDOS: ${DOMINIO}
+      PROVEDOR: ${MCP_PROVEDOR:-kie}
+      KIE_API_KEY: ${KIE_API_KEY}
+      MCP_LIMITE_CREDITOS_DIA: ${MCP_LIMITE_CREDITOS_DIA:-600}
+    volumes:
+      - mcp_dados:/dados
+    expose:
+      - "3333"
+    mem_limit: 256m
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    env_file: .env
+    volumes:
+      - ./Caddyfile.mcp:/etc/caddy/Caddyfile:ro
+      - caddy_dados:/data
+      - caddy_config:/config
+    depends_on:
+      - estudio-mcp
+
+volumes:
+  caddy_dados:
+  caddy_config:
+  mcp_dados:
