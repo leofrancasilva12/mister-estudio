@@ -10,7 +10,6 @@ const FILTROS = [
     ['imagem', 'Imagens'],
     ['video', 'Vídeos'],
     ['lipsync', 'Lip Sync'],
-    ['audio', 'Áudios'],
     ['cinema', 'Cinema'],
     ['ferramenta', 'Ferramentas'],
     ['app', 'Apps'],
@@ -33,7 +32,7 @@ export default function Biblioteca() {
     }, [itens, filtro, busca]);
 
     return (
-        <main className="mx-auto flex w-full max-w-[1360px] flex-col gap-5 px-4 pb-28 pt-7 md:px-8 md:pb-14">
+        <main className="mx-auto flex w-full max-w-[1360px] flex-col gap-5 px-4 pb-28 pt-7 md:px-8 lg:pb-14">
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <h1 className="text-[28px] font-medium tracking-[-0.03em]">Biblioteca</h1>
                 <label htmlFor="busca-biblioteca" className="sr-only">Buscar na biblioteca</label>

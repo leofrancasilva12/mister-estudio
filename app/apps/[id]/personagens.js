@@ -162,7 +162,7 @@ export default function TelaPersonagens() {
                 </>
             }
             resumo={[atual?.nome || 'Escolha um personagem', proporcao, res].join(' · ')}
-            gerar={{ rotulo: preparando ? 'Enviando fotos...' : 'Gerar com personagem', aoGerar, desativado: !!motivo, motivo, custo }}
+            gerar={{ rotulo: preparando ? 'Enviando fotos...' : 'Gerar cena', aoGerar, desativado: !!motivo, motivo, custo }}
             feed={<Feed itens={itensDaConversa} vazio="Crie um personagem com fotos do rosto e coloque ele em qualquer cena, sempre igual." />}
         />
     );

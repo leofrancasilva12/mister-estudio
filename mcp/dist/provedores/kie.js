@@ -107,7 +107,7 @@ function montar(p) {
         if (p.prompt.length > 5000)
             throw new Error("O texto passou de 5000 letras.");
         return {
-            model: "elevenlabs/text-to-speech-multilingual-v2",
+            model: p.modelo === "turbo" ? "elevenlabs/text-to-speech-turbo-2-5" : "elevenlabs/text-to-speech-multilingual-v2",
             input: { text: p.prompt, voice: idVoz(p.voz ?? "Laura"), stability: 0.5, similarity_boost: 0.75, style: 0, speed: Math.min(1.2, Math.max(0.7, p.velocidade ?? 1)) },
         };
     }

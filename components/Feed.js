@@ -51,8 +51,9 @@ function CartaoAndamento({ item }) {
 function CartaoFalha({ item }) {
     const { tentarDeNovo, remover } = useHistorico();
     return (
-        <div className="flex min-h-[180px] flex-col justify-between gap-3 rounded-2xl border border-linha p-3.5" style={{ aspectRatio: razao(item) }}>
-            <span className="flex items-start gap-2 text-[13px] text-alerta"><Icone nome="aviso" tamanho={16} className="mt-0.5 flex-none" /><span className="line-clamp-4">{item.motivo || 'A geração falhou.'}</span></span>
+        // min-w-0: a proporção nunca pode alargar o cartão além da coluna (bug do celular com mensagens longas)
+        <div className="flex min-h-[180px] w-full min-w-0 flex-col justify-between gap-3 overflow-hidden rounded-2xl border border-linha p-3.5" style={item.tipo === 'audio' ? undefined : { aspectRatio: razao(item) }}>
+            <span className="flex items-start gap-2 text-[13px] text-alerta"><Icone nome="aviso" tamanho={16} className="mt-0.5 flex-none" /><span className="line-clamp-4 break-words">{item.motivo || 'A geração falhou.'}</span></span>
             <span className="line-clamp-2 text-xs text-cinza">{item.detalhes}</span>
             <span className="flex gap-1.5">
                 <button type="button" onClick={() => tentarDeNovo(item.id)} className="h-10 flex-1 rounded-xl bg-tinta text-[13px] text-white">Tentar de novo</button>

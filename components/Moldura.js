@@ -12,7 +12,6 @@ export const SECOES = [
     { href: '/imagem', nome: 'Imagem', icone: 'imagem' },
     { href: '/video', nome: 'Vídeo', icone: 'video' },
     { href: '/lipsync', nome: 'Lip Sync', icone: 'rosto' },
-    { href: '/audio', nome: 'Áudio', icone: 'som' },
     { href: '/cinema', nome: 'Cinema', icone: 'camera' },
     { href: '/ferramentas', nome: 'Ferramentas', icone: 'ampliar' },
     { href: '/apps', nome: 'Apps', icone: 'faisca' },
@@ -68,7 +67,7 @@ export function Cabecalho() {
                 <Logo />
                 <span className="text-[17px] font-bold tracking-[-0.045em]">Mister Studio</span>
             </Link>
-            <nav aria-label="Seções do estúdio" className="sem-barra hidden min-w-0 flex-1 gap-0.5 overflow-x-auto md:flex">
+            <nav aria-label="Seções do estúdio" className="sem-barra hidden min-w-0 flex-1 gap-0.5 overflow-x-auto lg:flex">
                 {SECOES.map((s) => {
                     const atual = ativa(caminho, s.href);
                     return (
@@ -96,7 +95,7 @@ export function NavInferior() {
     const [mais, setMais] = useState(false);
     useEffect(() => setMais(false), [caminho]);
     const principais = [SECOES[0], SECOES[1], SECOES[2]];
-    const extras = [SECOES[7], SECOES[3], SECOES[4], SECOES[5], SECOES[6]];
+    const extras = [SECOES[6], SECOES[3], SECOES[4], SECOES[5]];
     const maisAtivo = extras.some((s) => ativa(caminho, s.href));
     const item = (s) => {
         const atual = ativa(caminho, s.href);
@@ -110,13 +109,13 @@ export function NavInferior() {
     return (
         <>
             {mais && (
-                <div className="fixed inset-0 z-40 flex flex-col justify-end md:hidden">
+                <div className="fixed inset-0 z-40 flex flex-col justify-end lg:hidden">
                     <button type="button" aria-label="Fechar" onClick={() => setMais(false)} className="flex-1 animate-escurecer bg-black/30" />
                     <div className="animate-gaveta rounded-t-3xl bg-white px-4 pb-[calc(24px+env(safe-area-inset-bottom))] pt-2">
                         <span aria-hidden="true" className="mx-auto mb-3 block h-1 w-9 rounded bg-black/20" />
                         <div className="grid grid-cols-2 gap-2.5">
                             {extras.map((s, i) => (
-                                <Link key={s.href} href={s.href} onClick={() => setMais(false)} className={`${i === 0 ? 'col-span-2' : ''} flex min-h-[88px] flex-col justify-between rounded-2xl border border-fina p-3.5`}>
+                                <Link key={s.href} href={s.href} onClick={() => setMais(false)} className={`flex min-h-[88px] flex-col justify-between rounded-2xl border border-fina p-3.5`}>
                                     <Icone nome={s.icone} tamanho={22} />
                                     <span className="text-sm font-medium">{s.nome}</span>
                                 </Link>
@@ -126,13 +125,13 @@ export function NavInferior() {
                     </div>
                 </div>
             )}
-            <nav aria-label="Navegação principal" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-fina bg-white px-2 pb-[calc(8px+env(safe-area-inset-bottom))] pt-1.5 md:hidden">
+            <nav aria-label="Navegação principal" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-fina bg-white px-2 pb-[calc(8px+env(safe-area-inset-bottom))] pt-1.5 lg:hidden">
                 {principais.map(item)}
                 <button type="button" onClick={() => setMais(true)} aria-expanded={mais} className={`flex min-h-[52px] flex-col items-center justify-center gap-1 text-[11px] ${maisAtivo ? 'font-medium text-tinta' : 'text-cinza'}`}>
                     <Icone nome="pontos" tamanho={22} />
                     Mais
                 </button>
-                {item(SECOES[8])}
+                {item(SECOES[7])}
             </nav>
         </>
     );

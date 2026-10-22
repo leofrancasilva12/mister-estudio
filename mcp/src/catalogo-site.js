@@ -512,6 +512,11 @@ Object.assign(CATALOGO, {
             return { model: 'omnihuman-1-5', input };
         },
     },
+    // Alternativa usada automaticamente quando o Multilingual v2 falha no Kie.ai
+    'voz-turbo': {
+        tipo: 'audio',
+        montar: (p) => ({ ...CATALOGO['voz-multilingual'].montar(p), model: 'elevenlabs/text-to-speech-turbo-2-5' }),
+    },
     'dialogo-v3': {
         tipo: 'audio',
         montar: (p) => {

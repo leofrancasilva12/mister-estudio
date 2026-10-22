@@ -24,7 +24,7 @@ const PRESETS = [
     { nome: 'Câmera orbital', texto: 'Gira em volta do produto', icone: 'orbita', href: `/video?${q({ prompt: 'A câmera gira devagar em volta de [seu produto] sobre uma mesa clara, reflexos suaves' })}` },
     { nome: 'Cena de cinema', texto: 'Câmera, lente e abertura reais', icone: 'camera', href: '/cinema' },
     { nome: 'Animar uma foto', texto: 'Dê movimento a uma imagem', icone: 'video', href: `/video?${q({ modo: 'imagem' })}` },
-    { nome: 'Voz em português', texto: 'Texto vira fala natural', icone: 'som', href: '/audio' },
+    { nome: 'Fazer alguém falar', texto: 'Foto + o seu áudio do ElevenLabs', icone: 'rosto', href: '/lipsync' },
     { nome: 'Remover fundo', texto: 'Recorte limpo em um toque', icone: 'faisca', href: `/ferramentas?${q({ ferramenta: 'recraft-fundo' })}` },
     { nome: 'Ampliar para 4K', texto: 'Mais nitidez em imagem e vídeo', icone: 'ampliar', href: '/ferramentas' },
 ];
@@ -36,7 +36,7 @@ export default function Explorar() {
     const [aberto, setAberto] = useState(null);
 
     return (
-        <main className="mx-auto flex w-full max-w-[1280px] animate-subir flex-col gap-12 px-4 pb-28 pt-6 md:px-8 md:pb-16 md:pt-10">
+        <main className="mx-auto flex w-full max-w-[1280px] animate-subir flex-col gap-12 px-4 pb-28 pt-6 md:px-8 lg:pb-16 md:pt-10">
             <section aria-labelledby="t-modelos" className="flex flex-col gap-4">
                 <h2 id="t-modelos" className="text-xl font-medium tracking-tight">Modelos disponíveis</h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

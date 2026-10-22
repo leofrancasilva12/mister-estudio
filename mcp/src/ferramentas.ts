@@ -345,8 +345,14 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       },
       annotations: { openWorldHint: true },
     },
-    async ({ texto: fala, voz, velocidade }) =>
-      comoTexto(await iniciarEsperando({ tipo: "audio", prompt: fala, formato: "1:1", voz, velocidade }, 40_000))
+    async ({ texto: fala, voz, velocidade }) => {
+      let t = await iniciarEsperando({ tipo: "audio", prompt: fala, formato: "1:1", voz, velocidade }, 40_000);
+      // Se o modelo principal falhar por erro interno do Kie.ai, tenta uma vez com o Turbo 2.5
+      if (typeof t !== "string" && t.situacao === "falhou" && /internal|interno|try again/i.test(t.erro ?? "")) {
+        t = await iniciarEsperando({ tipo: "audio", prompt: fala, formato: "1:1", voz, velocidade, modelo: "turbo" }, 40_000);
+      }
+      return comoTexto(t);
+    }
   );
 
   server.registerTool(

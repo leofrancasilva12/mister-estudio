@@ -10,14 +10,19 @@ import { useHistorico } from '@/lib/historico';
 import { formatarCreditos } from '@/lib/custos';
 
 export function useEhCelular() {
+    return useMidia('(max-width: 767px)');
+}
+
+// Telas largas (1200 px ou mais) têm espaço para a coluna de conversas fixa
+export function useMidia(consulta) {
     const [celular, setCelular] = useState(false);
     useEffect(() => {
-        const mq = window.matchMedia('(max-width: 767px)');
+        const mq = window.matchMedia(consulta);
         const mudar = () => setCelular(mq.matches);
         mudar();
         mq.addEventListener('change', mudar);
         return () => mq.removeEventListener('change', mudar);
-    }, []);
+    }, [consulta]);
     return celular;
 }
 
@@ -59,6 +64,7 @@ function useArquivosDeFora(aoSoltar) {
 
 export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar: gerarPagina, feed, anexos = [], aoAnexar, rotuloAnexar = 'Anexar imagem', aoSoltar }) {
     const celular = useEhCelular();
+    const largo = useMidia('(min-width: 1200px)');
     const [gaveta, setGaveta] = useState(false);
     const { saldo } = useHistorico();
     // O custo aprendido mora no aparelho: só mostra depois de montar, para o servidor e o navegador desenharem igual
@@ -97,19 +103,30 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar: g
         return (
             <div className="flex items-start">
                 {camada}
-                {lista && (
+                {largo && lista && (
                     <aside aria-label="Conversas" className="sticky top-[65px] h-[calc(100vh-65px)] w-[248px] flex-none animate-escurecer border-r border-fina bg-[#fafaf9]">
                         <ListaConversas aoFechar={() => mudarLista(false)} />
                     </aside>
                 )}
-                <aside aria-label={rotulo} className="rolagem sticky top-[65px] flex h-[calc(100vh-65px)] w-[380px] flex-none flex-col gap-5 overflow-y-auto border-r border-fina p-5 lg:w-[400px]">
+                <aside aria-label={rotulo} className="rolagem sticky top-[65px] flex h-[calc(100vh-65px-72px)] w-[340px] flex-none flex-col gap-5 overflow-y-auto border-r border-fina p-5 lg:h-[calc(100vh-65px)] lg:w-[380px] xl:w-[400px]">
                     {topo}
                     {prompt && <CampoPrompt {...prompt} />}
                     {opcoes}
                     <BotaoGerar {...gerar} />
                     {aoSoltar && <span className="-mt-2 text-center text-xs text-suave">Dica: arraste ou cole (Ctrl+V) uma imagem aqui</span>}
                 </aside>
-                <main className="min-w-0 flex-1 px-5 pb-12 pt-5 lg:px-7"><TopoConversa listaAberta={lista} aoAbrirLista={() => mudarLista(true)} />{feed}</main>
+                <main className="min-w-0 flex-1 px-5 pb-28 pt-5 lg:px-7 lg:pb-12">
+                    <TopoConversa listaAberta={largo && lista} aoAbrirLista={() => (largo ? mudarLista(true) : setListaCelular(true))} />
+                    {feed}
+                </main>
+                {!largo && listaCelular && (
+                    <div className="fixed inset-0 z-40 flex">
+                        <aside aria-label="Conversas" className="h-full w-[320px] animate-lateral bg-[#fafaf9]">
+                            <ListaConversas aoEscolher={() => setListaCelular(false)} aoFechar={() => setListaCelular(false)} />
+                        </aside>
+                        <button type="button" aria-label="Fechar conversas" onClick={() => setListaCelular(false)} className="flex-1 animate-escurecer bg-black/30" />
+                    </div>
+                )}
             </div>
         );
     }

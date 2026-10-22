@@ -22,7 +22,7 @@ function Grupo({ titulo, apps }) {
 
 export default function Apps() {
     return (
-        <main className="mx-auto flex w-full max-w-[1280px] animate-subir flex-col gap-10 px-4 pb-28 pt-7 md:px-8 md:pb-16">
+        <main className="mx-auto flex w-full max-w-[1280px] animate-subir flex-col gap-10 px-4 pb-28 pt-7 md:px-8 lg:pb-16">
             <div className="flex flex-col gap-1.5">
                 <h1 className="text-[28px] font-medium tracking-[-0.03em]">Apps</h1>
                 <p className="text-[15px] text-cinza">Ferramentas prontas: você manda as fotos, o Estúdio cuida do prompt.</p>

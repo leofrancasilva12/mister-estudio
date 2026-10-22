@@ -317,7 +317,14 @@ export function registrarFerramentas(server, provedor) {
             velocidade: z.number().min(0.7).max(1.2).default(1).describe("1 = normal"),
         },
         annotations: { openWorldHint: true },
-    }, async ({ texto: fala, voz, velocidade }) => comoTexto(await iniciarEsperando({ tipo: "audio", prompt: fala, formato: "1:1", voz, velocidade }, 40_000)));
+    }, async ({ texto: fala, voz, velocidade }) => {
+        let t = await iniciarEsperando({ tipo: "audio", prompt: fala, formato: "1:1", voz, velocidade }, 40_000);
+        // Se o modelo principal falhar por erro interno do Kie.ai, tenta uma vez com o Turbo 2.5
+        if (typeof t !== "string" && t.situacao === "falhou" && /internal|interno|try again/i.test(t.erro ?? "")) {
+            t = await iniciarEsperando({ tipo: "audio", prompt: fala, formato: "1:1", voz, velocidade, modelo: "turbo" }, 40_000);
+        }
+        return comoTexto(t);
+    });
     server.registerTool("gerar_dialogo", {
         title: "Gerar diálogo",
         description: "Gera uma conversa entre vozes diferentes (ElevenLabs V3), fala por fala, em português. " + listaVozes +

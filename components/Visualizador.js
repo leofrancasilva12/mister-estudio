@@ -7,7 +7,7 @@ import Icone from './Icone';
 import { baixar } from '@/lib/api';
 import { useHistorico, dataExpiracao } from '@/lib/historico';
 
-const PAGINA = { imagem: '/imagem', video: '/video', lipsync: '/lipsync', cinema: '/cinema', audio: '/audio', ferramenta: '/ferramentas' };
+const PAGINA = { imagem: '/imagem', video: '/video', lipsync: '/lipsync', cinema: '/cinema', audio: '/lipsync', ferramenta: '/ferramentas' };
 const paginaDe = (item) => (item.tipo === 'app' && item.appId ? `/apps/${item.appId}` : PAGINA[item.tipo] || '/imagem');
 
 function Atalho({ href, icone, children, aoClicar }) {
@@ -96,7 +96,7 @@ export default function Visualizador({ itens, id, aoMudar, aoFechar }) {
                         <span className="text-xs text-cinza">Continuar a partir daqui</span>
                         <div className="grid grid-cols-2 gap-2">
                             {item.tipo === 'audio'
-                                ? <Atalho icone="refazer" href={`/audio?${q({ texto: item.prompt || '' })}`}>Reusar texto</Atalho>
+                                ? null
                                 : item.prompt ? <Atalho icone="refazer" href={`${paginaDe(item)}?${q({ prompt: item.promptOriginal || item.prompt || '' })}`}>Reusar prompt</Atalho> : null}
                             {ehAudio && <Atalho icone="rosto" href={`/lipsync?${q({ audio: item.url })}`}>Usar no Lip Sync</Atalho>}
                             {ehImagem && <Atalho icone="video" href={`/video?${q({ imagem: item.url })}`}>Animar</Atalho>}

@@ -88,7 +88,7 @@ export default function TelaLipSync() {
                         ? <SlotArquivo envios={retrato} rotulo="Retrato" vazio="Anexar foto do rosto" proporcao="16 / 9" />
                         : <SlotArquivo envios={video} rotulo="Vídeo (uma pessoa de frente)" vazio="Anexar vídeo (até 50 MB)" proporcao="16 / 9" />}
                     <SlotArquivo envios={audio} rotulo="Áudio da fala" vazio="Anexar áudio (MP3 ou WAV, até 10 MB)" proporcao="5 / 1" />
-                    <a href="/audio" className="-mt-2 text-xs text-cinza underline underline-offset-2">Não tem áudio? Crie uma voz na aba Áudio</a>
+                    <span className="-mt-2 text-xs text-cinza">Crie a fala no app do ElevenLabs, baixe o MP3 e anexe aqui.</span>
                     <fieldset className="flex flex-col gap-2">
                         <legend className="mb-2 text-xs text-cinza">Modelo</legend>
                         {opcoes.map((m) => (
