@@ -2,29 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #ffffff; color: #111111; }
+body { font-family: var(--font-geist-sans), system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 
-body {
-  background: #050505;
-  color: white;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+::selection { background: #111111; color: #ffffff; }
+textarea::placeholder, input::placeholder { color: #8a8a8a; }
+input[type='range'] { accent-color: #111111; }
+
+/* Foco visível só no teclado */
+:focus { outline: none; }
+:focus-visible { outline: 2px solid #111111; outline-offset: 2px; border-radius: 10px; }
+
+/* Barras de rolagem discretas */
+.rolagem::-webkit-scrollbar { width: 6px; height: 6px; }
+.rolagem::-webkit-scrollbar-thumb { background: rgba(17,17,17,0.15); border-radius: 6px; }
+.sem-barra { scrollbar-width: none; }
+.sem-barra::-webkit-scrollbar { display: none; }
+
+/* Mosaico do feed */
+.mosaico { columns: 230px; column-gap: 12px; }
+.mosaico > * { break-inside: avoid; margin-bottom: 12px; }
+@media (max-width: 640px) { .mosaico { columns: 2; column-gap: 8px; } .mosaico > * { margin-bottom: 8px; } }
+
+/* Respeita quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
-
-:root {
-  --color-primary: #d9ff00;
-  --bg-app: #050505;
-  --bg-panel: #0a0a0a;
-  --bg-card: #111111;
-  --border-color: rgba(255,255,255,0.08);
-  --border-radius-xl: 1rem;
-}
-
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in-up { animation: fade-in-up 0.4s ease forwards; }

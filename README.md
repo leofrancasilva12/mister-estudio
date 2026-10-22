@@ -10,27 +10,19 @@ Celular  ──(usuário e senha)──>  Caddy (HTTPS)  ──>  Estúdio (Next
 
 O navegador só conversa com o nosso servidor. A chave do Kie.ai nunca sai da VPS.
 
-## O que mudou em relação ao original
+## Como o projeto está organizado
 
-| Arquivo | O que faz |
+| Pasta / arquivo | O que faz |
 |---|---|
-| `packages/studio/src/models.js` | A lista de modelos do Kie.ai que aparece na tela |
-| `packages/studio/src/api.js` | Substitui o `muapi.js`: as telas pedem ao nosso servidor, não à API |
+| `app/` | As telas: Explorar (`/`), Imagem, Vídeo, Lip Sync, Cinema e Biblioteca |
+| `app/api/estudio/*` | As portas do servidor: `gerar`, `tarefa`, `upload`, `creditos` |
+| `components/` | Peças do visual: cabeçalho, painel de criação, feed, visualizador e controles |
+| `lib/modelos.js` | Os modelos e opções que aparecem na tela |
+| `lib/historico.js` | Guarda as gerações neste aparelho e acompanha as que estão em andamento |
 | `lib/kie/catalogo.js` | O tradutor: converte cada pedido no formato exato do Kie.ai e recusa modelos fora da lista |
 | `lib/kie/cliente.js` | O único lugar que usa a chave: cria tarefas, acompanha, envia arquivos e lê os créditos |
-| `app/api/estudio/*` | As portas do servidor: `gerar`, `tarefa`, `upload`, `creditos` |
-| `components/StandaloneShell.js` | Sem a tela de digitar a chave; mostra os créditos no topo |
 
-## Modelos
-
-- **Imagem:** Nano Banana 2, Seedream 4.5, Flux 2 Pro, GPT Image 1.5. Os quatro também editam a partir de imagens de referência.
-- **Vídeo:** Seedance 2 e Kling 2.6, a partir de texto ou de imagem, e Hailuo 2.3, a partir de imagem. Dá para ligar ou desligar o áudio.
-- **Lip Sync:** InfiniteTalk e Kling Avatar, que fazem um retrato falar, e Lip Sync de vídeo, que troca a fala de um vídeo.
-- **Cinema:** usa o Nano Banana 2 com os presets de câmera e lente.
-
-Para adicionar um modelo, coloque-o em `models.js` (tela) e em `lib/kie/catalogo.js` (servidor), com o mesmo `id`.
-
----
+Visual: branco, traços finos, fonte Geist. No computador, painel de criação à esquerda e feed à direita; no celular, feed em tela cheia, barra de criação embaixo e ajustes numa gaveta.
 
 ## Subir na VPS, passo a passo
 
@@ -115,4 +107,4 @@ docker compose up -d       # reinicia com a nova configuração
 
 ## Créditos
 
-Baseado no [Open-Higgsfield-AI](https://github.com/Anil-matcha/Open-Higgsfield-AI), de Anil Matcha, sob licença MIT. As telas originais foram mantidas; o motor foi trocado para o Kie.ai.
+Baseado no [Open-Higgsfield-AI](https://github.com/Anil-matcha/Open-Higgsfield-AI), de Anil Matcha, sob licença MIT. O motor foi trocado para o Kie.ai e as telas foram redesenhadas no visual do Mister.

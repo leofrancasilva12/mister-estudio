@@ -3,19 +3,16 @@
   "description": "Estúdio do Mister: Open-Higgsfield adaptado ao Kie.ai, com a chave escondida no servidor",
   "private": true,
   "version": "1.0.0",
-  "workspaces": [
-    "packages/studio"
-  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
+    "geist": "^1.8.2",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "studio": "*",
     "server-only": "^0.0.1"
   },
   "devDependencies": {

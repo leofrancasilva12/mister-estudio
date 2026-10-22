@@ -1,9 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['studio'],
   // Gera uma versão enxuta para rodar no Docker
   output: 'standalone',
   poweredByHeader: false,
+  // Endereço antigo do estúdio
+  async redirects() {
+    return [{ source: '/studio', destination: '/', permanent: true }];
+  },
 };
 
 export default nextConfig;

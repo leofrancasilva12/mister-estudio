@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import Explorar from './explorar';
 
-export default function Home() {
-  redirect('/studio');
+export default function Inicio() {
+    return <Explorar />;
 }
