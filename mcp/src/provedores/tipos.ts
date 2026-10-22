@@ -21,6 +21,8 @@ export interface PedidoGeracao {
   falas?: { voz: string; texto: string }[]; // diálogo
   audioUrl?: string; // falante: o áudio da fala
   velocidade?: number; // áudio: 0.7 a 1.2
+  corpoPronto?: { model: string; input: Record<string, unknown> }; // pedido já montado pelo catálogo do site
+  creditosEstimados?: number;
 }
 
 export type SituacaoTarefa = "na_fila" | "gerando" | "pronta" | "falhou";

@@ -3,10 +3,11 @@ import { buscarPersonagem, listarGaleria, listarPersonagens, salvarNaGaleria } f
 import { consultarSaldo, estimarCreditos, NOMES_VOZES } from "./provedores/kie.js";
 import { config } from "./config.js";
 import sharp from "sharp";
+import { CATALOGO } from "./catalogo-site.js";
 // Aqui ficam as ferramentas que o Claude enxerga.
 // Cada uma tem: nome, descrição (é ela que ensina o Claude quando usar),
 // os campos de entrada (conferidos pelo zod) e o que acontece quando é chamada.
-const ESPERA_IMAGEM_MS = 25_000; // imagens costumam sair rápido: esperamos até 25 s antes de devolver
+const ESPERA_IMAGEM_MS = 55_000; // imagens levam de 10 a 50 s: esperamos até 55 s antes de devolver
 const INTERVALO_CONSULTA_MS = 1_000;
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 function texto(t) {
@@ -314,5 +315,75 @@ export function registrarFerramentas(server, provedor) {
         }
         const t = await iniciarEsperando({ tipo: "falante", prompt: prompt ?? "", formato: "1:1", modelo, imagemInicial: retrato, audioUrl, duracaoSegundos: segundos }, 0);
         return texto(antes + (typeof t === "string" ? t : descreverTarefa(t)));
+    });
+    // ---------- Tudo do site: modelos extras, ferramentas e apps de vídeo ----------
+    // Usa o mesmo catálogo do site, então os pedidos saem iguais aos de lá.
+    const AVANCADOS = {
+        "nano-banana-pro": { midia: "imagem", custo: (p) => (p.resolution === "4K" ? 24 : 18), rotulo: "Nano Banana Pro (cria e edita, até 8 refs)" },
+        "nano-banana-2": { midia: "imagem", custo: (p) => ({ "2K": 12, "4K": 18 }[p.resolution] ?? 8), rotulo: "Nano Banana 2 (criar)" },
+        "nano-banana-2-edit": { midia: "imagem", custo: (p) => ({ "2K": 12, "4K": 18 }[p.resolution] ?? 8), rotulo: "Nano Banana 2 (editar com images_list)" },
+        "seedream-5-pro": { midia: "imagem", custo: () => 15, rotulo: "Seedream 5.0 Pro (criar; quality basic|high)" },
+        "seedream-5-pro-edit": { midia: "imagem", custo: () => 15, rotulo: "Seedream 5.0 Pro (editar, até 10 refs)" },
+        "seedream-4.5": { midia: "imagem", custo: () => 10, rotulo: "Seedream 4.5 (criar)" },
+        "seedream-4.5-edit": { midia: "imagem", custo: () => 10, rotulo: "Seedream 4.5 (editar)" },
+        "gpt-image-2": { midia: "imagem", custo: (p) => ({ "2K": 10, "4K": 16 }[p.resolution] ?? 6), rotulo: "GPT Image 2 (cria e edita, até 16 refs)" },
+        "flux-2-pro": { midia: "imagem", custo: () => 10, rotulo: "Flux 2 Pro (criar)" },
+        "flux-2-pro-edit": { midia: "imagem", custo: () => 10, rotulo: "Flux 2 Pro (editar)" },
+        "ideogram-v3": { midia: "imagem", custo: () => 10, rotulo: "Ideogram V3 (ótimo com texto; resolution TURBO|BALANCED|QUALITY)" },
+        "v-kling-3": { midia: "video", custo: (p) => ({ pro: p.audio ? 27 : 18, "4K": 67 }[p.resolution] ?? (p.audio ? 20 : 14)) * Number(p.duration ?? 5), rotulo: "Kling 3.0 (texto ou quadros; resolution std|pro|4K; audio)" },
+        "v-veo-3-1": { midia: "video", custo: (p) => ({ veo3: 250, veo3_lite: 30 }[p.variante] ?? 60), rotulo: "Veo 3.1 (variante veo3_fast|veo3_lite|veo3; texto, quadros ou referencias)" },
+        "v-seedance-2-5": { midia: "video", custo: (p) => ({ "480p": 28, "1080p": 158 }[p.resolution] ?? 63) * Number(p.duration ?? 5), rotulo: "Seedance 2.5 (texto, quadros ou referencias; 4 a 30 s)" },
+        "v-seedance-2": { midia: "video", custo: (p) => 40 * Number(p.duration ?? 5), rotulo: "Seedance 2" },
+        "v-wan-3": { midia: "video", custo: (p) => ({ "720P": 16, "1080P": 32 }[p.resolution] ?? 8) * Number(p.duration ?? 5), rotulo: "Wan 3.0 (barato; resolution 480P|720P|1080P)" },
+        "v-hailuo-2-3": { midia: "video", custo: () => 60, rotulo: "Hailuo 2.3 (anima imagem: image_url)" },
+        "kling-avatar": { midia: "falante", custo: () => 120, rotulo: "Kling Avatar (image_url + audio_url)" },
+        "kling-avatar-pro": { midia: "falante", custo: () => 240, rotulo: "Kling Avatar Pro (image_url + audio_url)" },
+        "omnihuman-1-5": { midia: "falante", custo: () => 200, rotulo: "OmniHuman 1.5 (image_url + audio_url; resolution 720|1080)" },
+        "lipsync-video": { midia: "falante", custo: () => 100, rotulo: "Troca a fala de um vídeo (video_url + audio_url)" },
+        "topaz-imagem": { midia: "imagem", custo: (p) => (String(p.fator) === "4" ? 20 : 10), rotulo: "Ampliar imagem Topaz (image_url, fator 2|4)" },
+        "recraft-nitidez": { midia: "imagem", custo: () => 5, rotulo: "Ampliar com nitidez Recraft (image_url)" },
+        "recraft-fundo": { midia: "imagem", custo: () => 5, rotulo: "Tirar fundo Recraft (image_url, até 5 MB)" },
+        "topaz-video": { midia: "video", custo: () => 150, rotulo: "Ampliar vídeo Topaz (video_url, fator 2|4)" },
+        "wan-animate-replace": { midia: "video", custo: () => 100, rotulo: "Trocar pessoa no vídeo (video_url até 10 MB + image_url; resolution 480p|580p|720p)" },
+        "wan-animate-move": { midia: "video", custo: () => 100, rotulo: "Copiar movimento (video_url com o movimento + image_url da foto)" },
+        "pixverse-extend": { midia: "video", custo: (p) => 10 * Number(p.duration ?? 5), rotulo: "Estender vídeo (video_url, prompt, duration 1 a 15)" },
+    };
+    const IDS = Object.keys(AVANCADOS);
+    server.registerTool("gerar_avancado", {
+        title: "Gerar com qualquer modelo do Estúdio",
+        description: "Usa qualquer modelo, ferramenta ou app de vídeo do site Mister Studio, com os mesmos parâmetros de lá. Gasta créditos do Kie.ai. " +
+            "Para o básico prefira gerar_imagem, gerar_video e gerar_voz. Modelos:\n" +
+            IDS.map((id) => `- ${id}: ${AVANCADOS[id].rotulo}`).join("\n") +
+            "\nParâmetros (em 'parametros'): prompt; aspect_ratio (ex.: 1:1, 4:5, 9:16, 16:9); resolution (imagem 1K|2K|4K; vídeo conforme o modelo); " +
+            "quality; images_list (links https de referência para editar); image_url; last_image_url (quadro final); " +
+            "modo (texto|quadros|referencias) e refs (links) nos vídeos; duration (segundos); audio (true/false); variante (Veo); " +
+            "video_url; audio_url; fator (2|4). Todos os links precisam ser https.",
+        inputSchema: {
+            modelo: z.enum(IDS).describe("Id do modelo da lista"),
+            parametros: z.record(z.string(), z.any()).describe("Parâmetros do modelo, como no site"),
+        },
+        annotations: { openWorldHint: true },
+    }, async ({ modelo, parametros }) => {
+        const info = AVANCADOS[modelo];
+        let corpo;
+        try {
+            corpo = CATALOGO[modelo].montar(parametros ?? {});
+        }
+        catch (e) {
+            return texto(`Pedido inválido: ${e.message}`);
+        }
+        const est = Math.round(info.custo(parametros ?? {}));
+        const pedido = {
+            tipo: info.midia, prompt: String(parametros?.prompt ?? info.rotulo), formato: String(parametros?.aspect_ratio ?? "1:1"),
+            corpoPronto: corpo, creditosEstimados: est, modelo,
+        };
+        const t = await iniciarEsperando(pedido, info.midia === "imagem" ? ESPERA_IMAGEM_MS : 0);
+        if (typeof t === "string")
+            return texto(t);
+        const resposta = texto(descreverTarefa(t) + (t.situacao !== "pronta" && t.situacao !== "falhou" ? `\nEstimativa: cerca de ${est} créditos.` : ""));
+        const img = t.situacao === "pronta" && info.midia === "imagem" ? await previa(t.resultadoUrl) : null;
+        if (img)
+            resposta.content.unshift(img);
+        return resposta;
     });
 }

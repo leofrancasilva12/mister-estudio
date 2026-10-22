@@ -29,6 +29,8 @@ const idVoz = (nome) => {
 const letras = (p) => (p.falas?.length ? p.falas.reduce((n, f) => n + f.texto.length, 0) : p.prompt.length);
 // Estimativa em créditos (o valor real vem do Kie.ai depois)
 export function estimarCreditos(p) {
+    if (typeof p.creditosEstimados === "number")
+        return p.creditosEstimados;
     const q = p.qualidade ?? "1K";
     if (p.tipo === "imagem") {
         if (p.modelo === "nano-banana-2")
@@ -76,6 +78,8 @@ async function chamar(caminho, corpo) {
 }
 // Monta o pedido no formato de cada modelo do Kie.ai
 function montar(p) {
+    if (p.corpoPronto)
+        return p.corpoPronto;
     const refs = (p.referencias ?? []).filter((u) => /^https:\/\//.test(u));
     if (p.tipo === "imagem") {
         const resolution = p.qualidade ?? (p.modelo === "nano-banana-pro" || !p.modelo ? "2K" : "1K");

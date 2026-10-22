@@ -1,14 +1,15 @@
 {
   "name": "estudio-mcp",
-  "version": "0.2.0",
-  "description": "Servidor MCP do Estúdio: gera imagens e vídeos com IA e guarda na galeria",
+  "version": "0.3.0",
+  "description": "Servidor MCP do Est\u00fadio: gera imagens e v\u00eddeos com IA e guarda na galeria",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "start:stdio": "MODO=stdio node dist/index.js",
-    "inspector": "npx @modelcontextprotocol/inspector"
+    "inspector": "npx @modelcontextprotocol/inspector",
+    "sincronizar": "node -e \"const f=require('fs');f.writeFileSync('src/catalogo-site.js','// C\u00d3PIA de lib/kie/catalogo.js do site. Ao mudar l\u00e1, rode: npm run sincronizar\\n'+f.readFileSync('../lib/kie/catalogo.js','utf8'))\""
   },
   "author": "",
   "license": "MIT",

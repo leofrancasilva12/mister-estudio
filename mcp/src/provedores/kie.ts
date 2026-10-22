@@ -35,6 +35,7 @@ const letras = (p: PedidoGeracao) => (p.falas?.length ? p.falas.reduce((n, f) =>
 
 // Estimativa em créditos (o valor real vem do Kie.ai depois)
 export function estimarCreditos(p: PedidoGeracao): number {
+  if (typeof p.creditosEstimados === "number") return p.creditosEstimados;
   const q = p.qualidade ?? "1K";
   if (p.tipo === "imagem") {
     if (p.modelo === "nano-banana-2") return ({ "1K": 8, "2K": 12, "4K": 18 } as Record<string, number>)[q] ?? 12;
@@ -77,6 +78,7 @@ async function chamar(caminho: string, corpo?: unknown): Promise<any> {
 
 // Monta o pedido no formato de cada modelo do Kie.ai
 function montar(p: PedidoGeracao): { model: string; input: Record<string, unknown> } {
+  if (p.corpoPronto) return p.corpoPronto;
   const refs = (p.referencias ?? []).filter((u) => /^https:\/\//.test(u));
   if (p.tipo === "imagem") {
     const resolution = p.qualidade ?? (p.modelo === "nano-banana-pro" || !p.modelo ? "2K" : "1K");
