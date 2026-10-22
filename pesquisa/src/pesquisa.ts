@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { registrarNoticias } from "./noticias.js";
 
 // Pesquisa na web com fontes, usando os modelos Sonar da Perplexity pelo OpenRouter.
 // A chave do OpenRouter fica só no servidor (OPENROUTER_API_KEY).
@@ -92,6 +93,8 @@ type Tarefa = { id: string; tema: string; estado: "pesquisando" | "pronta" | "fa
 const tarefas = new Map<string, Tarefa>();
 
 export function registrarFerramentas(server: McpServer) {
+  registrarNoticias(server);
+
   server.registerTool(
     "pesquisar",
     {

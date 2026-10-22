@@ -28,6 +28,7 @@ Pesquisa na web com fontes, usando os modelos Sonar da Perplexity pelo OpenRoute
 | `pesquisar` | Responde com fontes. Níveis: `rapida` (sonar), `completa` (sonar-pro), `raciocinio` (sonar-reasoning-pro) |
 | `pesquisa_profunda` / `ver_pesquisa` | Relatório completo (sonar-deep-research), em segundo plano, de 2 a 10 min |
 | `gastos_pesquisa` | Gasto do dia e teto (`PESQUISA_LIMITE_USD_DIA`, padrão US$ 2) |
+| `ultimas_noticias` | Últimas notícias por RSS (g1 por editoria ou qualquer feed https). Grátis |
 
 ## Estrutura
 
