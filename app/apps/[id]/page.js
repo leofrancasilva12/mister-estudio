@@ -7,7 +7,7 @@ import TelaPincel from './pincel';
 
 export async function generateMetadata({ params }) {
     const app = appPorId((await params).id);
-    return { title: `${app?.nome || 'App'} · Estúdio` };
+    return { title: `${app?.nome || 'App'} · Mister Studio` };
 }
 
 export default async function Pagina({ params }) {

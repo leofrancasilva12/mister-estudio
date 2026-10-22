@@ -66,7 +66,7 @@ export function Cabecalho() {
         <header className="sticky top-0 z-30 flex items-center gap-x-6 gap-y-2 border-b border-fina bg-white/95 px-4 py-2.5 backdrop-blur md:px-8">
             <Link href="/" className="flex min-h-11 items-center gap-2.5">
                 <Logo />
-                <span className="text-base font-medium tracking-tight">Estúdio</span>
+                <span className="text-[17px] font-bold tracking-[-0.045em]">Mister Studio</span>
             </Link>
             <nav aria-label="Seções do estúdio" className="sem-barra hidden min-w-0 flex-1 gap-0.5 overflow-x-auto md:flex">
                 {SECOES.map((s) => {

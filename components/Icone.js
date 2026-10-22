@@ -1,3 +1,4 @@
+import Simbolo from './Simbolo';
 // Ícones de traço fino, desenhados à mão no estilo do Mister.
 const P = {
     seta: <path d="M5 12h14M13 6l6 6-6 6" />,
@@ -44,11 +45,7 @@ export default function Icone({ nome, tamanho = 18, largura = 1.5, className = '
     );
 }
 
+// Símbolo Mister Studio (o mesmo da abertura)
 export function Logo({ tamanho = 28 }) {
-    return (
-        <svg width={tamanho} height={tamanho} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="16" cy="16" r="15" strokeWidth="1" />
-            <path d="M10 21V11l6 7 6-7v10" strokeWidth="1.5" />
-        </svg>
-    );
+    return <Simbolo largura={Math.round(tamanho * 1.35)} />;
 }

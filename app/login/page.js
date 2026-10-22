@@ -80,7 +80,7 @@ export default function Login() {
                 </div>
             </div>
             <main className="flex flex-1 flex-col gap-10 px-6 pb-8 pt-7 md:max-w-[640px] md:px-[clamp(24px,6vw,88px)] md:pt-10">
-                <div className="flex items-center gap-2.5"><Logo /><span className="text-[17px] font-medium tracking-tight">Mister <span className="font-normal text-cinza">Estúdio</span></span></div>
+                <div className="flex items-center gap-2.5"><Logo /><span className="text-[19px] font-bold tracking-[-0.045em]">Mister Studio</span></div>
                 <div className="flex w-full max-w-[380px] animate-subir flex-col gap-8 md:mt-10">
                     <div className="flex flex-col gap-2.5">
                         <h1 className="text-[30px] font-medium leading-[1.08] tracking-[-0.035em] md:text-[40px]">Entre no seu estúdio</h1>

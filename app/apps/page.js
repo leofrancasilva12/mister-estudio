@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Icone from '@/components/Icone';
 import { APPS } from '@/lib/apps';
 
-export const metadata = { title: 'Apps · Estúdio' };
+export const metadata = { title: 'Apps · Mister Studio' };
 
 function Grupo({ titulo, apps }) {
     return (
