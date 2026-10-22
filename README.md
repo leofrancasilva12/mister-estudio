@@ -40,7 +40,7 @@ Os comandos abaixo rodam na VPS, logado como `leo` no Termius.
 
 ```bash
 cd ~
-git clone https://github.com/SEU_USUARIO/mister-estudio.git estudio
+git clone https://github.com/leofrancasilva12/mister-estudio.git estudio
 cd estudio
 ```
 
