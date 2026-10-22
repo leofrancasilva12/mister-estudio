@@ -12,7 +12,7 @@ import type { PedidoGeracao, Provedor, Tarefa } from "./provedores/tipos.js";
 import { consultarSaldo, estimarCreditos, NOMES_VOZES } from "./provedores/kie.js";
 import { config } from "./config.js";
 import sharp from "sharp";
-import { CATALOGO } from "./catalogo-site.js";
+import { CATALOGO } from "./catalogo.js";
 import { cadastrarPersonagem } from "./fotos.js";
 
 // Aqui ficam as ferramentas que o Claude enxerga.

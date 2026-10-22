@@ -1,3 +1,5 @@
+// Catálogo de modelos do Kie.ai: monta o pedido de cada modelo com validação.
+// (Veio do site do Estúdio, que foi aposentado; agora a fonte é este arquivo.)
 // Tradutor: pega o pedido da tela (id do modelo + opções) e monta o pedido exato do Kie.ai.
 // Roda SÓ no servidor. Se um id não estiver aqui, o pedido é recusado.
 

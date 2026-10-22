@@ -6,8 +6,6 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { config } from "./config.js";
 import { registrarFerramentas } from "./ferramentas.js";
-import { cadastrarPersonagem, ErroCadastro } from "./fotos.js";
-import { listarPersonagens } from "./galeria.js";
 import express from "express";
 import { criarProvedorSimulado } from "./provedores/simulado.js";
 import { criarProvedorKie } from "./provedores/kie.js";
@@ -52,13 +50,12 @@ async function iniciarHttp() {
     throw new Error("Defina MCP_TOKEN antes de abrir o servidor para a rede.");
   }
 
-  // Montamos o app à mão (em vez de createMcpExpressApp) para a rota interna aceitar fotos
-  // maiores que o limite padrão de 100 KB. A proteção de Host continua a mesma.
+  // App montado à mão; a proteção de Host é a mesma do createMcpExpressApp do SDK.
+  // Limite de 45 MB no corpo para o criar_personagem com fotos em base64.
   const app = express();
   if (config.hostsPermitidos.length) app.use(hostHeaderValidation(config.hostsPermitidos));
   else if (["127.0.0.1", "localhost", "::1"].includes(config.host)) app.use(localhostHostValidation());
-  app.use("/interno", express.json({ limit: "45mb" }));
-  app.use(express.json());
+  app.use(express.json({ limit: "45mb" }));
 
   // Rota de saúde, para o Docker e o Caddy saberem que o servidor está vivo.
   app.get(["/saude", "/mcp-saude"], (_req, res) => {
@@ -66,21 +63,6 @@ async function iniciarHttp() {
   });
 
   const protecao = config.tokenAcesso ? [exigirToken] : [];
-
-  // Rota interna usada pelo site ("Enviar para o Studio"). O Caddy não expõe /interno:
-  // só o app, pela rede interna do Docker, chega aqui (e ainda precisa da chave).
-  app.post("/interno/personagens", ...protecao, async (req: Request, res: Response) => {
-    try {
-      const p = await cadastrarPersonagem(req.body ?? {});
-      res.json({ ok: true, nome: p.nome, fotos: p.fotos.length });
-    } catch (e) {
-      const status = e instanceof ErroCadastro ? e.status : 500;
-      res.status(status).json({ ok: false, erro: (e as Error).message });
-    }
-  });
-  app.get("/interno/personagens", ...protecao, async (_req: Request, res: Response) => {
-    res.json({ ok: true, nomes: (await listarPersonagens()).map((p) => p.nome) });
-  });
 
   // Modo "sem sessão": cada pedido do Claude cria um servidor novo e descartável.
   // É o formato mais simples e robusto para rodar atrás de um proxy.
