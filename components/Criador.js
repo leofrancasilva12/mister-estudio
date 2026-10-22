@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import Icone from './Icone';
 import { BotaoGerar, CampoPrompt, FaixaAnexos } from './Controles';
+import { ListaConversas, TopoConversa } from './Conversas';
 
 export function useEhCelular() {
     const [celular, setCelular] = useState(false);
@@ -57,6 +58,10 @@ function useArquivosDeFora(aoSoltar) {
 export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, feed, anexos = [], aoAnexar, rotuloAnexar = 'Anexar imagem', aoSoltar }) {
     const celular = useEhCelular();
     const [gaveta, setGaveta] = useState(false);
+    const [lista, setLista] = useState(true);
+    const [listaCelular, setListaCelular] = useState(false);
+    useEffect(() => { try { setLista(localStorage.getItem('mister-estudio:lista') !== 'fechada'); } catch { /* sem armazenamento */ } }, []);
+    const mudarLista = (aberta) => { setLista(aberta); try { localStorage.setItem('mister-estudio:lista', aberta ? 'aberta' : 'fechada'); } catch { /* sem armazenamento */ } };
     const arrastando = useArquivosDeFora(aoSoltar);
 
     useEffect(() => {
@@ -79,6 +84,11 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, f
         return (
             <div className="flex items-start">
                 {camada}
+                {lista && (
+                    <aside aria-label="Conversas" className="sticky top-[65px] h-[calc(100vh-65px)] w-[248px] flex-none animate-escurecer border-r border-fina bg-[#fafaf9]">
+                        <ListaConversas aoFechar={() => mudarLista(false)} />
+                    </aside>
+                )}
                 <aside aria-label={rotulo} className="rolagem sticky top-[65px] flex h-[calc(100vh-65px)] w-[380px] flex-none flex-col gap-5 overflow-y-auto border-r border-fina p-5 lg:w-[400px]">
                     {topo}
                     {prompt && <CampoPrompt {...prompt} />}
@@ -86,7 +96,7 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, f
                     <BotaoGerar {...gerar} />
                     {aoSoltar && <span className="-mt-2 text-center text-xs text-suave">Dica: arraste ou cole (Ctrl+V) uma imagem aqui</span>}
                 </aside>
-                <main className="min-w-0 flex-1 px-5 pb-12 pt-5 lg:px-7">{feed}</main>
+                <main className="min-w-0 flex-1 px-5 pb-12 pt-5 lg:px-7"><TopoConversa listaAberta={lista} aoAbrirLista={() => mudarLista(true)} />{feed}</main>
             </div>
         );
     }
@@ -95,7 +105,15 @@ export default function Criador({ rotulo, topo, prompt, opcoes, resumo, gerar, f
 
     return (
         <>
-            <main className="px-4 pb-[300px] pt-3">{feed}</main>
+            <main className="px-4 pb-[300px] pt-3"><TopoConversa listaAberta={false} aoAbrirLista={() => setListaCelular(true)} />{feed}</main>
+            {listaCelular && (
+                <div className="fixed inset-0 z-40 flex">
+                    <aside aria-label="Conversas" className="h-full w-[85%] max-w-[320px] animate-lateral bg-[#fafaf9] pt-[env(safe-area-inset-top)]">
+                        <ListaConversas aoEscolher={() => setListaCelular(false)} aoFechar={() => setListaCelular(false)} />
+                    </aside>
+                    <button type="button" aria-label="Fechar conversas" onClick={() => setListaCelular(false)} className="flex-1 animate-escurecer bg-black/30" />
+                </div>
+            )}
             <div className="fixed inset-x-3 bottom-[calc(72px+env(safe-area-inset-bottom))] z-20 flex flex-col gap-2 rounded-[20px] border border-[rgba(17,17,17,0.14)] bg-white p-2.5 shadow-[0_8px_24px_rgba(17,17,17,0.08)]">
                 <FaixaAnexos grupos={anexos} />
                 {prompt && (

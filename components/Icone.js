@@ -30,6 +30,7 @@ const P = {
     produto: <><path d="M9 3h6v3l2 3v12H7V9l2-3z" /><path d="M9 13h6" /></>,
     retrato: <><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></>,
     orbita: <><ellipse cx="12" cy="12" rx="9" ry="4" /><circle cx="12" cy="12" r="2" /></>,
+    lista: <><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /></>,
     som: <><path d="M4 10v4h4l5 4V6L8 10z" /><path d="M16 9a4 4 0 0 1 0 6" /></>,
 };
 

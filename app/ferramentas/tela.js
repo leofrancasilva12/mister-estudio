@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Criador from '@/components/Criador';
 import Feed from '@/components/Feed';
@@ -10,7 +10,7 @@ import { useHistorico } from '@/lib/historico';
 
 export default function TelaFerramentas() {
     const busca = useSearchParams();
-    const { itens, gerar, avisar } = useHistorico();
+    const { itensDaConversa, gerar, avisar } = useHistorico();
     const [ferramentaId, setFerramentaId] = useState(FERRAMENTAS[0].id);
     const ferramenta = FERRAMENTAS.find((f) => f.id === ferramentaId);
     const [fator, setFator] = useState('2');
@@ -52,7 +52,7 @@ export default function TelaFerramentas() {
         });
     };
 
-    const meus = useMemo(() => itens.filter((i) => i.tipo === 'ferramenta'), [itens]);
+    const meus = itensDaConversa;
 
     return (
         <Criador

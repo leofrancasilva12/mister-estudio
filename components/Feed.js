@@ -1,7 +1,7 @@
 'use client';
 
 // Grade de resultados (feed) + visualizador em tela cheia.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Icone from './Icone';
 import Visualizador from './Visualizador';
 import { useHistorico, expiraEmBreve } from '@/lib/historico';
@@ -9,15 +9,40 @@ import { razaoCss } from '@/lib/modelos';
 
 const razao = (item) => (item.midia === 'audio' ? '5 / 2' : item.proporcao && item.proporcao.includes(':') ? razaoCss(item.proporcao) : item.midia === 'video' ? '16 / 10' : '1 / 1');
 
+// Tempo médio de cada tipo (segundos). O Kie.ai não informa o progresso real da maioria dos modelos,
+// então a porcentagem é uma estimativa pelo tempo: sobe até 95% e só chega a 100% quando o arquivo fica pronto.
+const TEMPO_MEDIO = { imagem: 35, cinema: 35, video: 180, lipsync: 150, audio: 15, ferramenta: 45 };
+
+function useAgora(ativo) {
+    const [agora, setAgora] = useState(() => Date.now());
+    useEffect(() => {
+        if (!ativo) return;
+        const t = setInterval(() => setAgora(Date.now()), 500);
+        return () => clearInterval(t);
+    }, [ativo]);
+    return agora;
+}
+
+export function porcentagem(item, agora) {
+    if (typeof item.progresso === 'number' && item.progresso > 0) return Math.min(99, Math.round(item.progresso));
+    if (item.estado === 'enviando') return 0;
+    const medio = (item.tipo === 'ferramenta' && item.midia === 'video' ? 120 : TEMPO_MEDIO[item.tipo]) || 60;
+    const passou = Math.max(0, (agora - (item.iniciadoEm || item.criadoEm)) / 1000);
+    return Math.min(95, Math.round(95 * (1 - Math.exp((-1.7 * passou) / medio))));
+}
+
 function CartaoAndamento({ item }) {
+    const agora = useAgora(true);
+    const pct = porcentagem(item, agora);
     return (
-        <div className="flex flex-col justify-end gap-2 rounded-2xl border border-linha bg-[#fafaf9] p-3.5" style={{ aspectRatio: razao(item) }}>
-            <span className="animate-pulsar text-[13px] font-medium">{item.estado === 'enviando' ? 'Enviando...' : 'Gerando...'}</span>
+        <div role="status" aria-label={`Gerando ${pct}%`} className="flex flex-col justify-end gap-2.5 rounded-2xl border border-linha bg-[#fafaf9] p-3.5" style={{ aspectRatio: razao(item) }}>
+            <span className="flex items-baseline justify-between gap-2">
+                <span className="text-[13px] font-medium">{item.estado === 'enviando' ? 'Enviando...' : 'Gerando'}</span>
+                <span className="font-mono text-[22px] leading-none tracking-tight tabular-nums">{pct}%</span>
+            </span>
             <span className="line-clamp-2 text-xs text-cinza">{item.detalhes}</span>
-            <span className="h-0.5 overflow-hidden rounded bg-black/[0.08]">
-                {typeof item.progresso === 'number' && item.progresso > 0
-                    ? <span className="block h-full bg-tinta transition-all" style={{ width: `${item.progresso}%` }} />
-                    : <span className="block h-full w-2/5 animate-carregar bg-tinta" />}
+            <span className="h-1 overflow-hidden rounded-full bg-black/[0.08]">
+                <span className="block h-full rounded-full bg-tinta transition-[width] duration-500 ease-out" style={{ width: `${Math.max(2, pct)}%` }} />
             </span>
         </div>
     );

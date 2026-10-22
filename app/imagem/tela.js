@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Criador from '@/components/Criador';
 import Feed from '@/components/Feed';
@@ -12,7 +12,7 @@ const QUE_EDITA = MODELOS_IMAGEM.find((m) => m.editar);
 
 export default function TelaImagem() {
     const busca = useSearchParams();
-    const { itens, gerar, avisar } = useHistorico();
+    const { itensDaConversa, gerar, avisar } = useHistorico();
     const [modo, setModo] = useState('criar');
     const [modeloId, setModeloId] = useState(MODELOS_IMAGEM[0].id);
     const modelo = MODELOS_IMAGEM.find((m) => m.id === modeloId);
@@ -39,6 +39,8 @@ export default function TelaImagem() {
     useEffect(() => {
         const p = busca.get('prompt');
         const r = busca.get('ref');
+        const m = busca.get('modelo');
+        if (m && MODELOS_IMAGEM.some((x) => x.id === m)) trocarModelo(m);
         if (p) setPrompt(p);
         if (r) { irParaEdicao(); refs.definirUrl(r); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +72,7 @@ export default function TelaImagem() {
         });
     };
 
-    const meus = useMemo(() => itens.filter((i) => i.tipo === 'imagem'), [itens]);
+    const meus = itensDaConversa;
     const opcoesModo = modelo.editar ? [['criar', 'Criar'], ['editar', 'Editar com imagens']] : [['criar', 'Criar']];
 
     return (

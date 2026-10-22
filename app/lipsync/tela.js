@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Criador from '@/components/Criador';
 import Feed from '@/components/Feed';
@@ -12,7 +12,7 @@ const AUDIOS = 'audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/aac,audio/mp4,a
 
 export default function TelaLipSync() {
     const busca = useSearchParams();
-    const { itens, gerar, avisar } = useHistorico();
+    const { itensDaConversa, gerar, avisar } = useHistorico();
     const [fonte, setFonte] = useState('foto');
     const opcoes = MODELOS_LIPSYNC.filter((m) => m.fonte === fonte);
     const [modeloId, setModeloId] = useState(MODELOS_LIPSYNC[0].id);
@@ -67,7 +67,7 @@ export default function TelaLipSync() {
         });
     };
 
-    const meus = useMemo(() => itens.filter((i) => i.tipo === 'lipsync'), [itens]);
+    const meus = itensDaConversa;
 
     return (
         <Criador

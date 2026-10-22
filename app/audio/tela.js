@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Criador from '@/components/Criador';
 import Feed from '@/components/Feed';
@@ -19,7 +19,7 @@ function Deslizante({ id, rotulo, valor, aoMudar, min, max, passo, mostrar }) {
 
 export default function TelaAudio() {
     const busca = useSearchParams();
-    const { itens, gerar, avisar } = useHistorico();
+    const { itensDaConversa, gerar, avisar } = useHistorico();
     const [texto, setTexto] = useState('');
     const [voz, setVoz] = useState(VOZES[0][0]);
     const [velocidade, setVelocidade] = useState(1);
@@ -39,7 +39,7 @@ export default function TelaAudio() {
         });
     };
 
-    const meus = useMemo(() => itens.filter((i) => i.tipo === 'audio'), [itens]);
+    const meus = itensDaConversa;
 
     return (
         <Criador

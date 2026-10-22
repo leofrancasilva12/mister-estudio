@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Icone from '@/components/Icone';
 import Visualizador from '@/components/Visualizador';
@@ -10,12 +9,12 @@ import { useHistorico } from '@/lib/historico';
 const q = (o) => new URLSearchParams(o).toString();
 
 const DESTAQUES = [
-    { nome: 'Nano Banana Pro', marca: 'Google · imagem', href: '/imagem', escuro: false, tom: '#efefec' },
-    { nome: 'Seedream 5.0 Pro', marca: 'ByteDance · imagem', href: '/imagem', escuro: false, tom: '#e7e7e3' },
-    { nome: 'GPT Image 2', marca: 'OpenAI · imagem', href: '/imagem', escuro: false, tom: '#f2f1ee' },
-    { nome: 'Kling 3.0', marca: 'Kuaishou · vídeo', href: '/video', escuro: true, tom: '#111111' },
-    { nome: 'Veo 3.1', marca: 'Google · vídeo com som', href: '/video', escuro: true, tom: '#262626' },
-    { nome: 'Seedance 2.5', marca: 'ByteDance · até 30 s', href: '/video', escuro: true, tom: '#3a3a3a' },
+    { nome: 'Nano Banana Pro', marca: 'Google · imagem', href: '/imagem?modelo=nano-banana-pro', escuro: false, tom: '#efefec' },
+    { nome: 'Seedream 5.0 Pro', marca: 'ByteDance · imagem', href: '/imagem?modelo=seedream-5-pro', escuro: false, tom: '#e7e7e3' },
+    { nome: 'GPT Image 2', marca: 'OpenAI · imagem', href: '/imagem?modelo=gpt-image-2', escuro: false, tom: '#f2f1ee' },
+    { nome: 'Kling 3.0', marca: 'Kuaishou · vídeo', href: '/video?modelo=v-kling-3', escuro: true, tom: '#111111' },
+    { nome: 'Veo 3.1', marca: 'Google · vídeo com som', href: '/video?modelo=v-veo-3-1', escuro: true, tom: '#262626' },
+    { nome: 'Seedance 2.5', marca: 'ByteDance · até 30 s', href: '/video?modelo=v-seedance-2-5', escuro: true, tom: '#3a3a3a' },
 ];
 
 const PRESETS = [
@@ -31,38 +30,13 @@ const PRESETS = [
 ];
 
 export default function Explorar() {
-    const router = useRouter();
     const { itens } = useHistorico();
-    const [tipo, setTipo] = useState('imagem');
-    const [texto, setTexto] = useState('');
     const prontos = itens.filter((i) => i.estado === 'pronto' && i.midia !== 'audio');
     const recentes = prontos.slice(0, 6);
     const [aberto, setAberto] = useState(null);
 
-    const enviar = (e) => {
-        e.preventDefault();
-        router.push(`/${tipo}${texto.trim() ? `?${q({ prompt: texto.trim() })}` : ''}`);
-    };
-
     return (
-        <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-14 px-4 pb-28 pt-8 md:px-8 md:pb-16 md:pt-14">
-            <section className="flex animate-subir flex-col items-center gap-6">
-                <h1 className="text-center text-[30px] font-medium leading-[1.05] tracking-[-0.04em] md:text-[52px]">O que vamos criar hoje?</h1>
-                <form onSubmit={enviar} className="flex w-full max-w-[760px] flex-col gap-3 rounded-[22px] border border-[rgba(17,17,17,0.14)] p-3.5 focus-within:border-tinta">
-                    <label htmlFor="prompt-explorar" className="sr-only">Descreva o que quer criar</label>
-                    <textarea id="prompt-explorar" rows={2} value={texto} onChange={(e) => setTexto(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) enviar(e); }} placeholder="Descreva uma imagem ou um vídeo..." className="resize-none bg-transparent px-1.5 py-1 text-[17px] leading-snug outline-none" />
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div role="group" aria-label="Tipo de criação" className="flex rounded-full border border-linha p-[3px]">
-                            {[['imagem', 'Imagem'], ['video', 'Vídeo']].map(([v, n]) => (
-                                <button key={v} type="button" aria-pressed={tipo === v} onClick={() => setTipo(v)} className={`h-[34px] rounded-full px-3.5 text-[13px] ${tipo === v ? 'bg-tinta text-white' : 'text-cinza'}`}>{n}</button>
-                            ))}
-                        </div>
-                        <span className="flex-1" />
-                        <button type="submit" className="flex h-11 items-center gap-2 rounded-2xl bg-tinta px-5 text-sm font-medium text-white">Continuar<Icone nome="seta" tamanho={16} /></button>
-                    </div>
-                </form>
-            </section>
-
+        <main className="mx-auto flex w-full max-w-[1280px] animate-subir flex-col gap-12 px-4 pb-28 pt-6 md:px-8 md:pb-16 md:pt-10">
             <section aria-labelledby="t-modelos" className="flex flex-col gap-4">
                 <h2 id="t-modelos" className="text-xl font-medium tracking-tight">Modelos disponíveis</h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Criador from '@/components/Criador';
 import Feed from '@/components/Feed';
@@ -14,7 +14,7 @@ const proporcoesDe = (m, modo) => (modo === 'quadros' ? (m.proporcoesQuadros ?? 
 
 export default function TelaVideo() {
     const busca = useSearchParams();
-    const { itens, gerar, avisar } = useHistorico();
+    const { itensDaConversa, gerar, avisar } = useHistorico();
     const [modo, setModo] = useState('texto');
     const disponiveis = MODELOS_VIDEO.filter((m) => m.modos.includes(modo));
     const [modeloId, setModeloId] = useState(MODELOS_VIDEO[0].id);
@@ -34,6 +34,8 @@ export default function TelaVideo() {
     useEffect(() => {
         const p = busca.get('prompt');
         const img = busca.get('imagem');
+        const m = busca.get('modelo');
+        if (m && MODELOS_VIDEO.some((x) => x.id === m)) trocarModelo(m);
         if (p) setPrompt(p);
         if (img) { setModo('quadros'); inicial.definirUrl(img); }
         if (busca.get('modo') === 'imagem') setModo('quadros');
@@ -110,7 +112,7 @@ export default function TelaVideo() {
         });
     };
 
-    const meus = useMemo(() => itens.filter((i) => i.tipo === 'video'), [itens]);
+    const meus = itensDaConversa;
     const anexos = modo === 'quadros' ? [{ envios: inicial, rotulo: 'Início' }, ...(modelo.quadroFinal ? [{ envios: final, rotulo: 'Fim' }] : [])] : modo === 'referencias' ? [{ envios: refs }] : [];
 
     return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Criador from '@/components/Criador';
 import Feed from '@/components/Feed';
@@ -25,7 +25,7 @@ function Visor({ camera, lente, focal, abertura, proporcao, qualidade }) {
 
 export default function TelaCinema() {
     const busca = useSearchParams();
-    const { itens, gerar, avisar } = useHistorico();
+    const { itensDaConversa, gerar, avisar } = useHistorico();
     const [prompt, setPrompt] = useState('');
     const [camera, setCamera] = useState(CINEMA.cameras[2][0]);
     const [lente, setLente] = useState(CINEMA.lentes[0][0]);
@@ -51,7 +51,7 @@ export default function TelaCinema() {
         });
     };
 
-    const meus = useMemo(() => itens.filter((i) => i.tipo === 'cinema'), [itens]);
+    const meus = itensDaConversa;
 
     return (
         <Criador
