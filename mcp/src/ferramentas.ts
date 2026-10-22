@@ -1,6 +1,14 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { buscarPersonagem, listarGaleria, listarPersonagens, salvarNaGaleria } from "./galeria.js";
+import {
+  apagarPersonagem,
+  buscarPersonagem,
+  criarPersonagem,
+  linksDoPersonagem,
+  listarGaleria,
+  listarPersonagens,
+  salvarNaGaleria,
+} from "./galeria.js";
 import type { PedidoGeracao, Provedor, Tarefa } from "./provedores/tipos.js";
 import { consultarSaldo, estimarCreditos, NOMES_VOZES } from "./provedores/kie.js";
 import { config } from "./config.js";
@@ -75,21 +83,65 @@ function descreverTarefa(t: Tarefa): string {
 }
 
 // Junta o pedido com a descrição e as fotos de um personagem salvo.
-function aplicarPersonagem(pedido: PedidoGeracao, nome?: string): { pedido: PedidoGeracao; aviso?: string } {
+// Se os links das fotos venceram (mais de 20 h), reenvia ao Kie.ai antes de gerar.
+async function aplicarPersonagem(pedido: PedidoGeracao, nome?: string): Promise<{ pedido: PedidoGeracao; aviso?: string }> {
   if (!nome) return { pedido };
-  const personagem = buscarPersonagem(nome);
+  const personagem = await buscarPersonagem(nome);
   if (!personagem) {
-    const nomes = listarPersonagens().map((p) => p.nome).join(", ");
-    return { pedido, aviso: `Personagem "${nome}" não encontrado. Disponíveis: ${nomes}. Gerei sem personagem.` };
+    const nomes = (await listarPersonagens()).map((p) => p.nome).join(", ");
+    return { pedido, aviso: `Personagem "${nome}" não encontrado. Disponíveis: ${nomes || "nenhum"}. Gerei sem personagem.` };
+  }
+  let links: string[] = [];
+  let aviso: string | undefined;
+  try {
+    links = await linksDoPersonagem(personagem);
+  } catch (e) {
+    aviso = `Não consegui enviar as fotos de "${personagem.nome}" (${(e as Error).message}). Gerei só com a descrição.`;
   }
   return {
+    aviso,
     pedido: {
       ...pedido,
       promptOriginal: pedido.prompt,
       prompt: `${personagem.descricao}\n\n${pedido.prompt}`,
-      referencias: [...(pedido.referencias ?? []), ...personagem.referencias],
+      referencias: [...(pedido.referencias ?? []), ...links],
     },
   };
+}
+
+// ---------- Fotos dos personagens: valida, reduz e converte ----------
+const MAX_BYTES = 8 * 1024 * 1024;
+const FORMATOS_ACEITOS = ["jpeg", "png", "webp"]; // conferido pelo conteúdo real do arquivo
+
+async function tratarFoto(bruto: Buffer, origem: string): Promise<Buffer> {
+  if (bruto.length > MAX_BYTES) throw new Error(`${origem} passou de 8 MB.`);
+  let formato: string | undefined;
+  try { formato = (await sharp(bruto).metadata()).format; } catch { /* não é imagem */ }
+  if (!formato || !FORMATOS_ACEITOS.includes(formato)) throw new Error(`${origem} não é JPEG, PNG ou WebP.`);
+  return sharp(bruto).rotate().resize(1024, 1024, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 86 }).toBuffer();
+}
+
+async function baixarFoto(url: string, n: number): Promise<Buffer> {
+  const origem = `A foto ${n} (link)`;
+  if (!/^https:\/\//i.test(url)) throw new Error(`${origem} precisa começar com https://.`);
+  let r: globalThis.Response;
+  try { r = await fetch(url, { signal: AbortSignal.timeout(30_000) }); } catch { throw new Error(`Não consegui baixar ${origem.toLowerCase()}.`); }
+  if (!r.ok) throw new Error(`${origem} respondeu com erro ${r.status}.`);
+  const tipo = (r.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+  if (tipo && !["image/jpeg", "image/png", "image/webp"].includes(tipo)) throw new Error(`${origem} não é JPEG, PNG ou WebP (veio ${tipo}).`);
+  if (Number(r.headers.get("content-length") ?? 0) > MAX_BYTES) throw new Error(`${origem} passou de 8 MB.`);
+  return tratarFoto(Buffer.from(await r.arrayBuffer()), origem);
+}
+
+function decodificarFoto(base64: string, n: number): Promise<Buffer> {
+  const origem = `A foto ${n} (base64)`;
+  const m = /^data:([^;,]+);base64,/i.exec(base64.trim());
+  if (m && !["image/jpeg", "image/png", "image/webp"].includes(m[1].toLowerCase())) {
+    throw new Error(`${origem} não é JPEG, PNG ou WebP (veio ${m[1]}).`);
+  }
+  const limpo = base64.trim().replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
+  if (limpo.length > Math.ceil(MAX_BYTES / 3) * 4 + 4) throw new Error(`${origem} passou de 8 MB.`);
+  return tratarFoto(Buffer.from(limpo, "base64"), origem);
 }
 
 export function registrarFerramentas(server: McpServer, provedor: Provedor) {
@@ -113,7 +165,7 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       annotations: { openWorldHint: true },
     },
     async ({ prompt, formato, modelo, qualidade, referencias, personagem }) => {
-      const { pedido, aviso } = aplicarPersonagem({ tipo: "imagem", prompt, formato, modelo, qualidade, referencias }, personagem);
+      const { pedido, aviso } = await aplicarPersonagem({ tipo: "imagem", prompt, formato, modelo, qualidade, referencias }, personagem);
       const teto = conferirTeto(estimarCreditos(pedido));
       if (teto) return texto(teto);
       let tarefa: Tarefa;
@@ -155,7 +207,7 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       annotations: { openWorldHint: true },
     },
     async ({ prompt, formato, duracao, modelo, imagem_inicial, personagem }) => {
-      const { pedido, aviso } = aplicarPersonagem(
+      const { pedido, aviso } = await aplicarPersonagem(
         { tipo: "video", prompt, formato, duracaoSegundos: duracao, modelo, imagemInicial: imagem_inicial },
         personagem
       );
@@ -221,10 +273,65 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       annotations: { readOnlyHint: true },
     },
     async () => {
-      const lista = listarPersonagens()
-        .map((p) => `- ${p.nome}: ${p.descricao}`)
+      const lista = (await listarPersonagens())
+        .map((p) => `- ${p.nome} (${p.fotos.length} ${p.fotos.length === 1 ? "foto" : "fotos"}): ${p.descricao}`)
         .join("\n");
       return texto(lista || "Nenhum personagem salvo.");
+    }
+  );
+
+  server.registerTool(
+    "criar_personagem",
+    {
+      title: "Criar personagem",
+      description:
+        "Salva um personagem (uma pessoa ou avatar) com 1 a 4 fotos do rosto e uma descrição física, para usar depois em " +
+        "gerar_imagem e gerar_video (campo personagem) e manter o mesmo rosto. As fotos podem vir como links https " +
+        "(fotos_links) ou em base64 / data URL (fotos_base64). Aceita JPEG, PNG ou WebP de até 8 MB cada. " +
+        "Use só rostos de pessoas que autorizaram.",
+      inputSchema: {
+        nome: z.string().trim().min(2).max(40).describe("Nome do personagem, por exemplo: Ana da loja"),
+        descricao: z.string().trim().min(10).max(600).describe("Descrição física: idade aparente, cabelo, pele, traços, estilo"),
+        fotos_links: z.array(z.string()).max(4).optional().describe("Links https das fotos do rosto"),
+        fotos_base64: z.array(z.string()).max(4).optional().describe("Fotos em base64 ou data URL (data:image/jpeg;base64,...)"),
+      },
+      annotations: { openWorldHint: true },
+    },
+    async ({ nome, descricao, fotos_links, fotos_base64 }) => {
+      const links = fotos_links ?? [];
+      const b64 = fotos_base64 ?? [];
+      const total = links.length + b64.length;
+      if (total < 1 || total > 4) return texto(`Mande de 1 a 4 fotos no total (recebi ${total}).`);
+      if (await buscarPersonagem(nome)) return texto(`Já existe um personagem chamado "${nome}". Escolha outro nome.`);
+      try {
+        const fotos: Buffer[] = [];
+        for (let i = 0; i < links.length; i++) fotos.push(await baixarFoto(links[i], i + 1));
+        for (let i = 0; i < b64.length; i++) fotos.push(await decodificarFoto(b64[i], links.length + i + 1));
+        const p = await criarPersonagem({ nome, descricao, fotos });
+        return texto(`Personagem "${p.nome}" salvo com ${p.fotos.length} ${p.fotos.length === 1 ? "foto" : "fotos"}.\nUse em gerar_imagem ou gerar_video com personagem: "${p.nome}".`);
+      } catch (e) {
+        return texto(`Não consegui criar o personagem: ${(e as Error).message}`);
+      }
+    }
+  );
+
+  server.registerTool(
+    "apagar_personagem",
+    {
+      title: "Apagar personagem",
+      description: "Apaga um personagem salvo e as fotos dele, pelo nome. Não dá para desfazer.",
+      inputSchema: {
+        nome: z.string().trim().min(1).describe("Nome do personagem"),
+      },
+      annotations: { destructiveHint: true },
+    },
+    async ({ nome }) => {
+      const apagado = await apagarPersonagem(nome);
+      if (!apagado) {
+        const nomes = (await listarPersonagens()).map((p) => p.nome).join(", ");
+        return texto(`Não encontrei "${nome}". Personagens salvos: ${nomes || "nenhum"}.`);
+      }
+      return texto(`Personagem "${apagado.nome}" apagado, junto com as fotos.`);
     }
   );
 

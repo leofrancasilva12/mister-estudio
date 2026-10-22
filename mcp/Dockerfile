@@ -15,6 +15,10 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 
+# Pasta dos dados (personagens). O volume nomeado herda este dono na primeira vez.
+RUN mkdir -p /dados/personagens && chown -R node:node /dados
+ENV DADOS_DIR=/dados
+
 # Roda com um usuário sem privilégios
 USER node
 EXPOSE 3333

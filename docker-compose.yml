@@ -20,6 +20,8 @@ services:
       PROVEDOR: ${MCP_PROVEDOR:-kie}
       KIE_API_KEY: ${KIE_API_KEY}
       MCP_LIMITE_CREDITOS_DIA: ${MCP_LIMITE_CREDITOS_DIA:-600}
+    volumes:
+      - mcp_dados:/dados # personagens e fotos, sobrevivem ao reiniciar
     expose:
       - "3333"
     mem_limit: 256m
@@ -43,3 +45,4 @@ services:
 volumes:
   caddy_dados:
   caddy_config:
+  mcp_dados:
