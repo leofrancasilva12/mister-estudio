@@ -2,7 +2,13 @@
 {$DOMINIO} {
 	encode zstd gzip
 
-	reverse_proxy estudio:3000
+	# /mcp/... vai para o MCP do Estúdio; o resto, para o app
+	handle /mcp* {
+		reverse_proxy estudio-mcp:3333
+	}
+	handle {
+		reverse_proxy estudio:3000
+	}
 
 	header {
 		Strict-Transport-Security "max-age=31536000"
