@@ -160,7 +160,8 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
       description:
         "Inicia a geração de um vídeo curto com IA, a partir de texto ou animando uma imagem. Vídeos demoram alguns minutos, " +
         "então esta ferramenta devolve na hora o id da tarefa. Depois use consultar_tarefa para pegar o resultado. " +
-        "Gasta créditos: Kling 3.0 cerca de 14 por segundo (5 s = 70); Veo 3.1 Rápido 60 por vídeo de até 8 s, com som.",
+        "Gasta créditos: Kling 3.0 cerca de 14 por segundo (5 s = 70); Veo 3.1 Rápido 60 por vídeo de até 8 s, com som. " +
+        "Para os outros modelos de vídeo (Gemini Omni, Seedance, HappyHorse, Kling Omni, MiniMax H3, Wan), use gerar_avancado.",
       inputSchema: {
         prompt: z.string().min(3).describe("Descrição da cena e do movimento de câmera"),
         formato: z.enum(["9:16", "16:9", "1:1"]).default("9:16").describe("9:16 para Reels e stories"),
@@ -433,6 +434,11 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
     "v-seedance-2": { midia: "video", custo: (p) => 40 * Number(p.duration ?? 5), rotulo: "Seedance 2" },
     "v-wan-3": { midia: "video", custo: (p) => (({ "720P": 16, "1080P": 32 } as any)[p.resolution] ?? 8) * Number(p.duration ?? 5), rotulo: "Wan 3.0 (barato; resolution 480P|720P|1080P)" },
     "v-hailuo-2-3": { midia: "video", custo: () => 60, rotulo: "Hailuo 2.3 (anima imagem: image_url)" },
+    // Custos abaixo são estimativas provisórias (a documentação do Kie.ai não publica preço); o valor real é lido ao terminar.
+    "v-gemini-omni-1-1": { midia: "video", custo: (p) => (({ "360p": 6, "1080p": 16, "4k": 40 } as any)[p.resolution] ?? 10) * Number(p.duration ?? 6), rotulo: "Gemini Omni 1.1 Flash, do Google (texto, quadros ou referencias; edita vídeo com video_url; 4 a 10 s; resolution 360p|720p|1080p|4k)" },
+    "v-happyhorse-1-1": { midia: "video", custo: (p) => (p.resolution === "720p" ? 10 : 16) * Number(p.duration ?? 5), rotulo: "HappyHorse 1.1 (texto ou imagem inicial; 3 a 15 s; resolution 720p|1080p)" },
+    "v-kling-3-omni": { midia: "video", custo: (p) => (({ "1080p": 18, "4k": 67 } as any)[p.resolution] ?? 14) * (p.audio ? 1.4 : 1) * Number(p.duration ?? 5), rotulo: "Kling 3.0 Omni (só texto para vídeo; 3 a 15 s; resolution 720p|1080p|4k; audio)" },
+    "v-minimax-h3": { midia: "video", custo: (p) => (p.resolution === "2K" ? 30 : 12) * Number(p.duration ?? 6), rotulo: "MiniMax H3 (só texto para vídeo, sai com áudio; 4 a 15 s; resolution 768P|2K)" },
     "kling-avatar": { midia: "falante", custo: () => 120, rotulo: "Kling Avatar (image_url + audio_url)" },
     "kling-avatar-pro": { midia: "falante", custo: () => 240, rotulo: "Kling Avatar Pro (image_url + audio_url)" },
     "omnihuman-1-5": { midia: "falante", custo: () => 200, rotulo: "OmniHuman 1.5 (image_url + audio_url; resolution 720|1080)" },
@@ -458,7 +464,9 @@ export function registrarFerramentas(server: McpServer, provedor: Provedor) {
         "\nParâmetros (em 'parametros'): prompt; aspect_ratio (ex.: 1:1, 4:5, 9:16, 16:9); resolution (imagem 1K|2K|4K; vídeo conforme o modelo); " +
         "quality; images_list (links https de referência para editar); image_url; last_image_url (quadro final); " +
         "modo (texto|quadros|referencias) e refs (links) nos vídeos; duration (segundos); audio (true/false); variante (Veo); " +
-        "video_url; audio_url; fator (2|4). Todos os links precisam ser https.",
+        "video_url; audio_url; fator (2|4). Todos os links precisam ser https. " +
+        "Só no Gemini Omni: character_ids e audio_ids (ids criados no Kie.ai, até 3 de cada), video_url com video_inicio e video_fim (trecho de até 10 s, para editar um vídeo). " +
+        "Para vídeo com a melhor qualidade geral, comece por v-gemini-omni-1-1, v-kling-3, v-veo-3-1 ou v-seedance-2-5.",
       inputSchema: {
         modelo: z.enum(IDS).describe("Id do modelo da lista"),
         parametros: z.record(z.string(), z.any()).describe("Parâmetros do modelo, como no site"),

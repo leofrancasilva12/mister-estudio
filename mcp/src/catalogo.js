@@ -573,6 +573,116 @@ Object.assign(CATALOGO, {
     },
 });
 
+// ================= Vídeo: modelos mais novos (out/2026) =================
+// Nomes e limites conferidos na documentação do Kie.ai (docs.kie.ai).
+const idsOpcionais = (lista, max) => (Array.isArray(lista) ? lista : []).filter((x) => typeof x === 'string' && x.trim()).slice(0, max);
+const PADRAO_MOVIMENTO = 'Movimento natural e cinematográfico';
+
+Object.assign(CATALOGO, {
+    // Gemini Omni 1.1 Flash (Google): aceita texto, imagens, áudio, personagens e até 1 vídeo (para editar).
+    // Cotas do Kie.ai: imagens (1 cada) + vídeo (2) + personagens (1 cada) <= 7.
+    'v-gemini-omni-1-1': {
+        tipo: 'video',
+        montar: (p) => {
+            const modo = p.modo || (p.image_url ? 'quadros' : 'texto');
+            const input = {
+                prompt: texto(p.prompt, { obrigatorio: modo === 'texto', padrao: modo === 'texto' ? undefined : PADRAO_MOVIMENTO, max: 20000 }),
+                duration: escolher(String(p.duration), ['6', '4', '8', '10']),
+                resolution: escolher(p.resolution, ['720p', '360p', '1080p', '4k']),
+            };
+            if (modo === 'quadros') {
+                // Quadro inicial (e final, se quiser): não pode misturar com referências, áudio, vídeo ou personagens
+                input.first_frame_url = link(p.image_url, 'o quadro inicial');
+                if (p.last_image_url) input.last_frame_url = link(p.last_image_url, 'o quadro final');
+                return { model: 'google/gemini-omni-flash-1-1', input };
+            }
+            const imagens = modo === 'referencias' ? links(p.refs, 'as imagens de referência', 7) : [];
+            const personagens = idsOpcionais(p.character_ids, 3);
+            const audios = idsOpcionais(p.audio_ids, 3);
+            let video;
+            if (p.video_url) {
+                const start = numero(p.video_inicio, 0, 30, 0);
+                const ends = numero(p.video_fim, 0, 30, start + 10);
+                if (ends <= start) throw new PedidoInvalido('O fim do trecho do vídeo precisa ser depois do início.');
+                if (ends - start > 10) throw new PedidoInvalido('O trecho do vídeo pode ter no máximo 10 segundos.');
+                video = [{ url: link(p.video_url, 'o vídeo'), start, ends }];
+            }
+            const cota = imagens.length + (video ? 2 : 0) + personagens.length;
+            if (cota > 7) throw new PedidoInvalido(`O Omni aceita até 7 de cota (imagem = 1, vídeo = 2, personagem = 1). Este pedido usa ${cota}.`);
+            if (imagens.length) input.image_urls = imagens;
+            if (personagens.length) input.character_ids = personagens;
+            if (audios.length) input.audio_ids = audios;
+            if (video) input.video_list = video;
+            if (!video || p.aspect_ratio) input.aspect_ratio = escolher(p.aspect_ratio, ['9:16', '16:9']);
+            return { model: 'google/gemini-omni-flash-1-1', input };
+        },
+    },
+
+    // HappyHorse 1.1: texto para vídeo ou imagem para vídeo (3 a 15 s)
+    'v-happyhorse-1-1': {
+        tipo: 'video',
+        montar: (p) => {
+            const modo = p.modo || (p.image_url ? 'quadros' : 'texto');
+            if (modo === 'referencias') throw new PedidoInvalido('O HappyHorse aqui funciona com texto ou com uma imagem inicial (modo quadros).');
+            const resolution = escolher(p.resolution, ['1080p', '720p']);
+            const duration = Math.round(numero(p.duration, 3, 15, 5));
+            if (modo === 'quadros') {
+                return {
+                    model: 'happyhorse-1-1/image-to-video',
+                    input: { image_urls: [link(p.image_url, 'a imagem inicial')], prompt: texto(p.prompt, { padrao: PADRAO_MOVIMENTO, max: 5000 }), resolution, duration },
+                };
+            }
+            return {
+                model: 'happyhorse-1-1/text-to-video',
+                input: {
+                    prompt: texto(p.prompt, { obrigatorio: true, max: 5000 }),
+                    resolution,
+                    aspect_ratio: escolher(p.aspect_ratio, ['9:16', '16:9', '1:1', '4:3', '3:4', '4:5', '5:4', '9:21', '21:9']),
+                    duration,
+                },
+            };
+        },
+    },
+
+    // Kling 3.0 Omni: só texto para vídeo por aqui (para animar imagem, use v-kling-3)
+    'v-kling-3-omni': {
+        tipo: 'video',
+        montar: (p) => {
+            const modo = p.modo || (p.image_url ? 'quadros' : 'texto');
+            if (modo !== 'texto') throw new PedidoInvalido('O Kling 3.0 Omni está liberado só para texto para vídeo. Para animar uma imagem, use o v-kling-3.');
+            return {
+                model: 'kling-3.0-omni/text-to-video',
+                input: {
+                    prompt: texto(p.prompt, { obrigatorio: true, max: 3072 }),
+                    audio: !!p.audio,
+                    resolution: escolher(p.resolution, ['720p', '1080p', '4k']),
+                    aspect_ratio: escolher(p.aspect_ratio, ['9:16', '16:9', '1:1']),
+                    duration: Math.round(numero(p.duration, 3, 15, 5)),
+                },
+            };
+        },
+    },
+
+    // MiniMax H3: texto para vídeo, já sai com áudio estéreo (não dá para desligar)
+    'v-minimax-h3': {
+        tipo: 'video',
+        montar: (p) => {
+            const modo = p.modo || (p.image_url ? 'quadros' : 'texto');
+            if (modo !== 'texto') throw new PedidoInvalido('O MiniMax H3 está liberado só para texto para vídeo.');
+            return {
+                model: 'minimax-h3/text-to-video',
+                input: {
+                    prompt: texto(p.prompt, { obrigatorio: true, max: 7000 }),
+                    aspect_ratio: escolher(p.aspect_ratio, ['9:16', '16:9', '1:1', '4:3', '3:4', '21:9']),
+                    duration: Math.round(numero(p.duration, 4, 15, 6)),
+                    // 768P por padrão para poupar créditos; 2K é a opção de máxima qualidade
+                    resolution: escolher(p.resolution, ['768P', '2K']),
+                },
+            };
+        },
+    },
+});
+
 export function montarPedido(tipo, params = {}) {
     const item = CATALOGO[params.model];
     if (!item) throw new PedidoInvalido('Modelo desconhecido.');

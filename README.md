@@ -11,7 +11,7 @@ Conector do Claude para gerar **imagens, vídeos e avatares falantes** com os mo
 | `gerar_imagem` | Nano Banana Pro, Nano Banana 2 ou GPT Image 2, com referências e personagens. A imagem aparece no chat. |
 | `gerar_video` | Kling 3.0 ou Veo 3.1 Rápido, de texto ou animando uma imagem |
 | `fazer_falar` | Foto + áudio (ex.: MP3 do ElevenLabs) vira vídeo falado (Kling Avatar) |
-| `gerar_avancado` | Qualquer modelo do catálogo: Seedream, Flux, Ideogram, Seedance, Wan, Hailuo, OmniHuman, ampliar, tirar fundo, trocar pessoa no vídeo, copiar movimento, estender vídeo |
+| `gerar_avancado` | Qualquer modelo do catálogo: Seedream, Flux, Ideogram, Seedance, Wan, Hailuo, OmniHuman, ampliar, tirar fundo, trocar pessoa no vídeo, copiar movimento, estender vídeo. Vídeo de ponta: **Gemini Omni 1.1 Flash** (também edita vídeo e usa personagens), **Kling 3.0 Omni**, **HappyHorse 1.1** e **MiniMax H3**, além de Kling 3.0, Veo 3.1 e Seedance 2.5 |
 | `criar_personagem` / `listar_personagens` / `apagar_personagem` | Rostos salvos (1 a 4 fotos) para manter a mesma pessoa entre peças |
 | `consultar_tarefa` | Andamento de vídeos e o link quando ficam prontos |
 | `ver_creditos` | Saldo do Kie.ai e o gasto do dia |
